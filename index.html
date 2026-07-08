@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <title>Schemaläggning</title>
+    <title>Schemaläggning - Detaljerad</title>
     <style>
         * {
             margin: 0;
@@ -19,10 +19,8 @@
         }
 
         body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f5f5;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
         }
 
         .app-container {
@@ -30,19 +28,18 @@
             flex-direction: column;
             height: 100vh;
             background: white;
-            max-width: 100%;
         }
 
         header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 20px;
-            text-align: center;
+            padding: 16px;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            flex-shrink: 0;
         }
 
         header h1 {
-            font-size: 24px;
+            font-size: 20px;
             margin-bottom: 10px;
         }
 
@@ -72,10 +69,47 @@
 
         .content {
             flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .tabs-container {
+            display: flex;
+            gap: 8px;
+            padding: 12px;
+            background: #f5f5f5;
+            border-bottom: 1px solid #ddd;
+            overflow-x: auto;
+            flex-shrink: 0;
+        }
+
+        .tab-btn {
+            padding: 8px 12px;
+            border: none;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+            color: #666;
+            white-space: nowrap;
+            transition: all 0.3s;
+            border: 1px solid #ddd;
+        }
+
+        .tab-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        .schedule-scroll {
+            flex: 1;
             overflow-y: auto;
-            overflow-x: hidden;
+            overflow-x: auto;
             -webkit-overflow-scrolling: touch;
-            padding: 16px;
+            padding: 12px;
         }
 
         .schedule-table {
@@ -85,104 +119,128 @@
             border-radius: 8px;
             overflow: hidden;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            font-size: 12px;
         }
 
         .schedule-table thead {
-            background: #f5f5f5;
+            background: #667eea;
+            color: white;
             position: sticky;
             top: 0;
+            z-index: 10;
         }
 
         .schedule-table th {
-            padding: 12px 8px;
-            text-align: left;
-            font-size: 12px;
+            padding: 8px;
+            text-align: center;
             font-weight: bold;
-            color: #333;
-            border-bottom: 2px solid #ddd;
+            border: 1px solid #556;
+            font-size: 11px;
         }
 
         .schedule-table td {
-            padding: 12px 8px;
-            border-bottom: 1px solid #eee;
+            padding: 6px;
+            border: 1px solid #ddd;
+            text-align: center;
+            height: 50px;
+        }
+
+        .time-cell {
+            background: #f9f9f9;
+            font-weight: bold;
+            color: #667eea;
+            font-size: 11px;
+        }
+
+        .person-cell {
+            background: #f0f0f0;
+            font-weight: bold;
+            color: #333;
+            text-align: left;
+            padding-left: 8px;
+        }
+
+        .slot-select {
+            width: 100%;
+            height: 100%;
+            border: none;
+            padding: 4px;
+            cursor: pointer;
+            font-size: 11px;
+            background: white;
+            color: #333;
+            border-radius: 4px;
+        }
+
+        .slot-select.fixed {
+            background: #e8eaf6;
+            color: #667eea;
+            font-weight: bold;
+            cursor: not-allowed;
+        }
+
+        .slot-select option {
+            padding: 4px;
+        }
+
+        .coverage-panel {
+            background: white;
+            padding: 12px;
+            border-top: 2px solid #ddd;
+            max-height: 150px;
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .coverage-title {
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
             font-size: 13px;
         }
 
-        .person-name {
-            font-weight: bold;
-            color: #667eea;
-            white-space: nowrap;
-            min-width: 80px;
-        }
-
-        .person-pct {
-            font-size: 11px;
-            color: #999;
-        }
-
-        .role-item {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 4px 8px;
+        .coverage-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 8px;
             border-radius: 4px;
-            font-size: 11px;
-            margin: 2px 2px 2px 0;
-            white-space: nowrap;
-        }
-
-        .role-item.secondary {
-            background: #f0ad4e;
-        }
-
-        .role-item.rotation {
-            background: #5cb85c;
-        }
-
-        .role-item.admin {
-            background: #d9534f;
-        }
-
-        .role-item.meeting {
-            background: #5bc0de;
-        }
-
-        .role-item.supervision {
-            background: #764ba2;
-        }
-
-        .empty {
-            color: #ccc;
+            margin-bottom: 4px;
             font-size: 12px;
+            background: #f5f5f5;
         }
 
-        .footer {
-            padding: 16px;
-            text-align: center;
-            font-size: 12px;
-            color: #999;
-            border-top: 1px solid #eee;
-            background: #fafafa;
+        .coverage-good {
+            background: #d4edda;
+            color: #155724;
         }
 
-        .export-buttons {
+        .coverage-warning {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .coverage-bad {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 16px;
+            padding: 12px;
+            background: #f5f5f5;
+            flex-shrink: 0;
             flex-wrap: wrap;
         }
 
         .btn {
-            flex: 1;
-            min-width: 120px;
-            padding: 12px;
+            padding: 10px 14px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: bold;
             transition: all 0.3s;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
         }
 
         .btn-primary {
@@ -191,7 +249,6 @@
         }
 
         .btn-primary:active {
-            background: #764ba2;
             transform: scale(0.98);
         }
 
@@ -201,60 +258,18 @@
         }
 
         .btn-secondary:active {
-            background: #ec971f;
             transform: scale(0.98);
         }
 
-        @media (max-width: 480px) {
-            header h1 {
-                font-size: 20px;
-            }
-
-            .content {
-                padding: 12px;
-            }
-
-            .schedule-table th,
-            .schedule-table td {
-                padding: 10px 6px;
-                font-size: 12px;
-            }
-
-            .person-name {
-                font-size: 12px;
-                min-width: 70px;
-            }
-
-            .role-item {
-                font-size: 10px;
-                padding: 3px 6px;
-            }
-        }
-
-        .day-column {
-            text-align: center;
-            font-weight: bold;
-            color: #667eea;
-        }
-
         .legend {
-            background: #f9f9f9;
-            padding: 12px;
-            border-radius: 6px;
-            margin-top: 16px;
-            font-size: 12px;
-        }
-
-        .legend-title {
-            font-weight: bold;
-            margin-bottom: 8px;
-            color: #333;
-        }
-
-        .legend-items {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 8px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
         }
 
         .legend-item {
@@ -263,18 +278,68 @@
             gap: 6px;
         }
 
-        .legend-dot {
-            width: 12px;
-            height: 12px;
-            border-radius: 2px;
+        .legend-color {
+            width: 20px;
+            height: 16px;
+            border-radius: 3px;
             flex-shrink: 0;
+        }
+
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 18px;
+            }
+
+            .schedule-table {
+                font-size: 10px;
+            }
+
+            .schedule-table th {
+                font-size: 9px;
+                padding: 4px;
+            }
+
+            .schedule-table td {
+                padding: 4px;
+                height: 45px;
+            }
+
+            .slot-select {
+                font-size: 9px;
+            }
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            max-width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
     <div class="app-container">
         <header>
-            <h1>📋 Schemaläggning</h1>
+            <h1>📋 Schemaläggning - Detaljerad</h1>
             <div class="week-tabs">
                 <button class="week-btn active" onclick="setWeekType('odd')">Udda vecka</button>
                 <button class="week-btn" onclick="setWeekType('even')">Jämn vecka</button>
@@ -282,143 +347,119 @@
         </header>
 
         <div class="content">
-            <div class="export-buttons">
-                <button class="btn btn-primary" onclick="exportExcel()">📊 Excel</button>
-                <button class="btn btn-secondary" onclick="printSchedule()">🖨️ Skriv ut</button>
+            <div class="tabs-container">
+                <button class="tab-btn active" onclick="showTab('schedule')">📅 Schema</button>
+                <button class="tab-btn" onclick="showTab('coverage')">✅ Täckning</button>
             </div>
 
-            <div id="scheduleContainer"></div>
-
-            <div class="legend">
-                <div class="legend-title">Rolltyper:</div>
-                <div class="legend-items">
+            <div id="scheduleTab" class="schedule-scroll">
+                <div class="legend">
                     <div class="legend-item">
-                        <div class="legend-dot" style="background: #667eea;"></div>
-                        <span>Primär</span>
+                        <div class="legend-color" style="background: #e8eaf6;"></div>
+                        <span>Fast slot</span>
                     </div>
                     <div class="legend-item">
-                        <div class="legend-dot" style="background: #f0ad4e;"></div>
-                        <span>Sekundär</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot" style="background: #5cb85c;"></div>
-                        <span>Rotation</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot" style="background: #d9534f;"></div>
-                        <span>Admin</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot" style="background: #5bc0de;"></div>
-                        <span>Möte</span>
-                    </div>
-                    <div class="legend-item">
-                        <div class="legend-dot" style="background: #764ba2;"></div>
-                        <span>Handledning</span>
+                        <div class="legend-color" style="background: white; border: 1px solid #ddd;"></div>
+                        <span>Flexibelt slot</span>
                     </div>
                 </div>
+
+                <div id="scheduleContainer"></div>
+            </div>
+
+            <div id="coverageTab" class="schedule-scroll" style="display: none;">
+                <div class="coverage-panel" style="max-height: none; padding: 16px;">
+                    <div class="coverage-title">Täckningskontroll för veckan</div>
+                    <div id="coverageContent"></div>
+                </div>
+            </div>
+
+            <div class="coverage-panel">
+                <div class="coverage-title">📊 Snabbtäckning</div>
+                <div id="quickCoverage"></div>
             </div>
         </div>
 
-        <div class="footer">
-            Vecka sparas automatiskt lokalt 💾
+        <div class="controls">
+            <button class="btn btn-primary" onclick="exportExcel()">📊 Excel</button>
+            <button class="btn btn-secondary" onclick="resetSchedule()">🔄 Återställ</button>
         </div>
     </div>
 
     <script>
         let currentWeekType = 'odd';
+        let schedule = {};
 
-        const staff = {
-            'Josefine': {
-                percentage: '50%',
-                roles: [
-                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Chef/Mottagning' },
-                    { type: 'rotation', days: ['Ons'], name: 'MVC' },
-                    { type: 'rotation', days: ['Var'], name: 'TeleQ' },
-                    { type: 'supervision', days: ['Var'], name: 'H.sara' },
-                    { type: 'admin', days: ['T/F'], name: 'Admin' }
+        // Fasta aktiviteter
+        const fixedSlots = {
+            'odd': {
+                'Max': [
+                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte', type: 'möte' },
+                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård', type: 'fixed' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                ],
+                'Jens': [
+                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond', type: 'fixed' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                ],
+                'Sara': [
+                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården', type: 'fixed' }
+                ],
+                'Josefine': [
+                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC', type: 'fixed' }
+                ],
+                'Helena': [
+                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare', type: 'fixed' }
                 ]
             },
-            'Max': {
-                percentage: '80%',
-                roles: [
-                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'secondary', days: ['Var'], name: 'MLA' },
-                    { type: 'rotation', days: ['Var'], name: 'BVC' },
-                    { type: 'meeting', days: ['Tis'], name: 'Syn.möte' },
-                    { type: 'supervision', days: ['Var'], name: 'H.tom' },
-                    { type: 'admin', days: ['T/F'], name: 'Admin' }
-                ]
-            },
-            'Rita': {
-                percentage: '80%',
-                roles: [
-                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'rotation', days: ['Ons'], name: 'MVC' },
-                    { type: 'meeting', days: ['Tor'], name: 'Smärt' },
-                    { type: 'admin', days: ['Mån'], name: 'Admin' }
-                ]
-            },
-            'Jens': {
-                percentage: '90%',
-                roles: [
-                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'rotation', days: ['Var'], name: 'BVC' },
-                    { type: 'primary', days: ['Var'], name: 'Lillåhem' },
-                    { type: 'supervision', days: ['Var'], name: 'H.ingrid' },
-                    { type: 'admin', days: ['M/F'], name: 'Admin' }
-                ]
-            },
-            'Sara': {
-                percentage: 'ST',
-                roles: [
-                    { type: 'primary', days: ['Var'], name: 'Orsagården' },
-                    { type: 'rotation', days: ['Var'], name: 'TeleQ' },
-                    { type: 'admin', days: ['Tis'], name: 'Admin' },
-                    { type: 'supervision', days: ['Var'], name: 'H.josefine' }
-                ]
-            },
-            'Tom': {
-                percentage: 'AT',
-                roles: [
-                    { type: 'primary', days: ['Var'], name: 'Akutmott' },
-                    { type: 'supervision', days: ['Var'], name: 'H.max' },
-                    { type: 'admin', days: ['Var'], name: 'Admin' }
-                ]
-            },
-            'Ingrid': {
-                percentage: 'AT',
-                roles: [
-                    { type: 'primary', days: ['Var'], name: 'Akutmott' },
-                    { type: 'supervision', days: ['Var'], name: 'H.jens' },
-                    { type: 'admin', days: ['Var'], name: 'Admin' }
-                ]
-            },
-            'Helena': {
-                percentage: '60%',
-                roles: [
-                    { type: 'primary', days: ['Var'], name: 'Vårdgiv' },
-                    { type: 'secondary', days: ['Var'], name: 'Skollä' }
-                ]
-            },
-            'Sandra': {
-                percentage: '100%',
-                roles: [
-                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Mottag/Admin' }
+            'even': {
+                'Max': [
+                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte', type: 'möte' },
+                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård', type: 'fixed' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                ],
+                'Jens': [
+                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond', type: 'fixed' }
+                ],
+                'Sara': [
+                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården', type: 'fixed' }
+                ],
+                'Rita': [
+                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC', type: 'fixed' }
+                ],
+                'Helena': [
+                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare', type: 'fixed' }
                 ]
             }
         };
 
-        function getRoleColor(type) {
-            const colors = {
-                'primary': '#667eea',
-                'secondary': '#f0ad4e',
-                'rotation': '#5cb85c',
-                'admin': '#d9534f',
-                'meeting': '#5bc0de',
-                'supervision': '#764ba2'
-            };
-            return colors[type] || '#667eea';
+        const staff = ['Josefine', 'Max', 'Jens', 'Rita', 'Sara', 'Tom', 'Ingrid', 'Helena', 'Sandra'];
+        const flexOptions = ['Ledig', 'TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte'];
+        const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
+        const slots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+
+        function initSchedule() {
+            if (!localStorage.getItem('schedule')) {
+                const emptySchedule = {};
+                staff.forEach(person => {
+                    emptySchedule[person] = {};
+                    days.forEach(day => {
+                        emptySchedule[person][day] = {};
+                        slots.forEach(slot => {
+                            emptySchedule[person][day][slot] = 'Ledig';
+                        });
+                    });
+                });
+                schedule = emptySchedule;
+                saveSchedule();
+            } else {
+                schedule = JSON.parse(localStorage.getItem('schedule'));
+            }
+        }
+
+        function saveSchedule() {
+            localStorage.setItem('schedule', JSON.stringify(schedule));
+            localStorage.setItem('scheduleWeekType', currentWeekType);
         }
 
         function setWeekType(type) {
@@ -428,77 +469,182 @@
             });
             event.target.classList.add('active');
             renderSchedule();
-            localStorage.setItem('schedulerWeekType', type);
+            saveSchedule();
+        }
+
+        function showTab(tab) {
+            document.getElementById('scheduleTab').style.display = tab === 'schedule' ? 'block' : 'none';
+            document.getElementById('coverageTab').style.display = tab === 'coverage' ? 'block' : 'none';
+            
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            if (tab === 'coverage') {
+                updateCoveragePanel();
+            }
+        }
+
+        function isFixed(person, day, time) {
+            const fixed = fixedSlots[currentWeekType][person] || [];
+            return fixed.some(slot => {
+                if (slot.day !== day) return false;
+                const [startH, startM] = slot.start.split(':').map(Number);
+                const [endH, endM] = slot.end.split(':').map(Number);
+                const [h, m] = time.split(':').map(Number);
+                const slotStart = startH * 60 + startM;
+                const slotEnd = endH * 60 + endM;
+                const currentTime = h * 60 + m;
+                return currentTime >= slotStart && currentTime < slotEnd;
+            });
+        }
+
+        function getFixedName(person, day, time) {
+            const fixed = fixedSlots[currentWeekType][person] || [];
+            const item = fixed.find(slot => {
+                if (slot.day !== day) return false;
+                const [startH, startM] = slot.start.split(':').map(Number);
+                const [endH, endM] = slot.end.split(':').map(Number);
+                const [h, m] = time.split(':').map(Number);
+                const slotStart = startH * 60 + startM;
+                const slotEnd = endH * 60 + endM;
+                const currentTime = h * 60 + m;
+                return currentTime >= slotStart && currentTime < slotEnd;
+            });
+            return item ? item.name : '';
+        }
+
+        function updateScheduleValue(person, day, time, value) {
+            schedule[person][day][time] = value;
+            saveSchedule();
+            updateQuickCoverage();
         }
 
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
-            const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
-
+            
             let html = `
                 <table class="schedule-table">
                     <thead>
                         <tr>
-                            <th>Person</th>
-                            ${days.map(day => `<th class="day-column">${day}</th>`).join('')}
-                        </tr>
-                    </thead>
-                    <tbody>
+                            <th style="position: sticky; left: 0; z-index: 11;">Person</th>
             `;
 
-            Object.keys(staff).forEach(person => {
-                html += `
-                    <tr>
-                        <td>
-                            <div class="person-name">${person}</div>
-                            <div class="person-pct">${staff[person].percentage}</div>
-                        </td>
+            days.forEach(day => {
+                html += `<th colspan="11">${day}</th>`;
+            });
+
+            html += `</tr><tr><th style="position: sticky; left: 0; z-index: 11;"></th>`;
+            
+            days.forEach(day => {
+                slots.forEach(slot => {
+                    html += `<th class="time-cell">${slot}</th>`;
+                });
+            });
+
+            html += `</tr></thead><tbody>`;
+
+            staff.forEach(person => {
+                html += `<tr>
+                    <td class="person-cell" style="position: sticky; left: 0; z-index: 9; background: #f0f0f0;">${person}</td>
                 `;
 
                 days.forEach(day => {
-                    const dayRoles = staff[person].roles.filter(role => 
-                        role.days.includes(day) || role.days.includes('Var')
-                    );
+                    slots.forEach(time => {
+                        const isFixedSlot = isFixed(person, day, time);
+                        const fixedName = isFixedSlot ? getFixedName(person, day, time) : '';
+                        const value = schedule[person][day][time];
 
-                    let cellContent = '';
-                    if (dayRoles.length > 0) {
-                        cellContent = dayRoles.map(role => {
-                            return `<div class="role-item ${role.type}">${role.name}</div>`;
-                        }).join('');
-                    } else {
-                        cellContent = '<span class="empty">-</span>';
-                    }
-
-                    html += `<td>${cellContent}</td>`;
+                        if (isFixedSlot) {
+                            html += `<td class="time-cell"><input type="text" class="slot-select fixed" value="${fixedName}" disabled></td>`;
+                        } else {
+                            html += `<td><select class="slot-select" onchange="updateScheduleValue('${person}', '${day}', '${time}', this.value)">`;
+                            flexOptions.forEach(opt => {
+                                html += `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`;
+                            });
+                            html += `</select></td>`;
+                        }
+                    });
                 });
 
                 html += `</tr>`;
             });
 
-            html += `
-                    </tbody>
-                </table>
-            `;
+            html += `</tbody></table>`;
+            container.innerHTML = html;
+            updateQuickCoverage();
+        }
+
+        function updateQuickCoverage() {
+            const container = document.getElementById('quickCoverage');
+            const roles = ['TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte'];
+            
+            let html = '';
+            roles.forEach(role => {
+                let count = 0;
+                staff.forEach(person => {
+                    days.forEach(day => {
+                        slots.forEach(time => {
+                            if (schedule[person][day][time] === role) {
+                                count++;
+                            }
+                        });
+                    });
+                });
+
+                const coverage = count > 0 ? `${count} slot` : 'Ingen';
+                const className = count > 0 ? 'coverage-good' : 'coverage-bad';
+                html += `<div class="coverage-item ${className}"><span>${role}:</span><span>${coverage}</span></div>`;
+            });
+
+            container.innerHTML = html;
+        }
+
+        function updateCoveragePanel() {
+            const container = document.getElementById('coverageContent');
+            const roles = ['TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte'];
+            
+            let html = '';
+            roles.forEach(role => {
+                const assignments = [];
+                staff.forEach(person => {
+                    days.forEach(day => {
+                        slots.forEach(time => {
+                            if (schedule[person][day][time] === role) {
+                                assignments.push(`${person} (${day} ${time})`);
+                            }
+                        });
+                    });
+                });
+
+                const className = assignments.length > 0 ? 'coverage-good' : 'coverage-bad';
+                html += `<div class="coverage-item ${className}">
+                    <strong>${role}:</strong> ${assignments.length > 0 ? assignments.join(', ') : 'Inte tilldelad'}
+                </div>`;
+            });
 
             container.innerHTML = html;
         }
 
         function exportExcel() {
-            const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
-            let csv = 'Person,Procent,' + days.join(',') + '\n';
-
-            Object.keys(staff).forEach(person => {
-                let row = `"${person}","${staff[person].percentage}"`;
-                
-                days.forEach(day => {
-                    const dayRoles = staff[person].roles.filter(role => 
-                        role.days.includes(day) || role.days.includes('Var')
-                    );
-                    const rolesStr = dayRoles.map(r => r.name).join('; ');
-                    row += `,"${rolesStr}"`;
+            let csv = 'Person,';
+            days.forEach(day => {
+                slots.forEach(time => {
+                    csv += `${day} ${time},`;
                 });
+            });
+            csv += '\n';
 
-                csv += row + '\n';
+            staff.forEach(person => {
+                csv += `${person},`;
+                days.forEach(day => {
+                    slots.forEach(time => {
+                        const value = schedule[person][day][time];
+                        csv += `"${value}",`;
+                    });
+                });
+                csv += '\n';
             });
 
             const element = document.createElement('a');
@@ -510,21 +656,16 @@
             document.body.removeChild(element);
         }
 
-        function printSchedule() {
-            window.print();
+        function resetSchedule() {
+            if (confirm('Är du säker på att du vill återställa schemat?')) {
+                localStorage.removeItem('schedule');
+                initSchedule();
+                renderSchedule();
+            }
         }
 
-        // Load saved week type
-        const savedWeek = localStorage.getItem('schedulerWeekType');
-        if (savedWeek) {
-            currentWeekType = savedWeek;
-            document.querySelectorAll('.week-btn').forEach((btn, idx) => {
-                if ((savedWeek === 'odd' && idx === 0) || (savedWeek === 'even' && idx === 1)) {
-                    btn.classList.add('active');
-                }
-            });
-        }
-
+        // Init
+        initSchedule();
         renderSchedule();
     </script>
 </body>
