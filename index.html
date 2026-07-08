@@ -2,482 +2,409 @@
 <html lang="sv">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schemaläggning - Arbetsplats</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <title>Schemaläggning</title>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html, body {
+            height: 100%;
+            width: 100%;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
 
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
+        .app-container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
             background: white;
-            border-radius: 12px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-            padding: 30px;
+            max-width: 100%;
         }
 
         header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            border-bottom: 3px solid #667eea;
-            padding-bottom: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        h1 {
-            color: #333;
-            font-size: 28px;
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
         }
 
-        .week-selector {
+        .week-tabs {
             display: flex;
-            gap: 10px;
-            align-items: center;
+            gap: 8px;
+            justify-content: center;
         }
 
         .week-btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 6px;
+            padding: 8px 16px;
+            border: 2px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            transition: all 0.3s ease;
-            background: #f0f0f0;
-            color: #333;
+            transition: all 0.3s;
         }
 
         .week-btn.active {
+            background: white;
+            color: #667eea;
+            border-color: white;
+        }
+
+        .content {
+            flex: 1;
+            overflow-y: auto;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+            padding: 16px;
+        }
+
+        .schedule-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .schedule-table thead {
+            background: #f5f5f5;
+            position: sticky;
+            top: 0;
+        }
+
+        .schedule-table th {
+            padding: 12px 8px;
+            text-align: left;
+            font-size: 12px;
+            font-weight: bold;
+            color: #333;
+            border-bottom: 2px solid #ddd;
+        }
+
+        .schedule-table td {
+            padding: 12px 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 13px;
+        }
+
+        .person-name {
+            font-weight: bold;
+            color: #667eea;
+            white-space: nowrap;
+            min-width: 80px;
+        }
+
+        .person-pct {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .role-item {
+            display: inline-block;
             background: #667eea;
             color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            margin: 2px 2px 2px 0;
+            white-space: nowrap;
         }
 
-        .week-btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+        .role-item.secondary {
+            background: #f0ad4e;
         }
 
-        .controls {
+        .role-item.rotation {
+            background: #5cb85c;
+        }
+
+        .role-item.admin {
+            background: #d9534f;
+        }
+
+        .role-item.meeting {
+            background: #5bc0de;
+        }
+
+        .role-item.supervision {
+            background: #764ba2;
+        }
+
+        .empty {
+            color: #ccc;
+            font-size: 12px;
+        }
+
+        .footer {
+            padding: 16px;
+            text-align: center;
+            font-size: 12px;
+            color: #999;
+            border-top: 1px solid #eee;
+            background: #fafafa;
+        }
+
+        .export-buttons {
             display: flex;
             gap: 10px;
-            margin-top: 20px;
+            margin-bottom: 16px;
+            flex-wrap: wrap;
         }
 
         .btn {
-            padding: 10px 20px;
+            flex: 1;
+            min-width: 120px;
+            padding: 12px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: bold;
-            transition: all 0.3s ease;
+            transition: all 0.3s;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+        }
+
+        .btn-primary {
             background: #667eea;
             color: white;
         }
 
-        .btn:hover {
+        .btn-primary:active {
             background: #764ba2;
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            transform: scale(0.98);
         }
 
         .btn-secondary {
             background: #f0ad4e;
+            color: white;
         }
 
-        .btn-secondary:hover {
+        .btn-secondary:active {
             background: #ec971f;
+            transform: scale(0.98);
         }
 
-        .schedule-wrapper {
-            overflow-x: auto;
-            margin-top: 20px;
+        @media (max-width: 480px) {
+            header h1 {
+                font-size: 20px;
+            }
+
+            .content {
+                padding: 12px;
+            }
+
+            .schedule-table th,
+            .schedule-table td {
+                padding: 10px 6px;
+                font-size: 12px;
+            }
+
+            .person-name {
+                font-size: 12px;
+                min-width: 70px;
+            }
+
+            .role-item {
+                font-size: 10px;
+                padding: 3px 6px;
+            }
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        thead {
-            background: #667eea;
-            color: white;
-        }
-
-        th {
-            padding: 15px;
-            text-align: left;
+        .day-column {
+            text-align: center;
             font-weight: bold;
-            border: 1px solid #ddd;
-        }
-
-        td {
-            padding: 12px 15px;
-            border: 1px solid #ddd;
-            background: #f9f9f9;
-        }
-
-        tr:hover td {
-            background: #f0f0f0;
-        }
-
-        .day-cell {
-            font-weight: bold;
-            background: #e8eaf6;
-        }
-
-        .time-cell {
-            font-size: 12px;
-            color: #666;
-        }
-
-        .role-badge {
-            display: inline-block;
-            background: #667eea;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            margin: 3px 0;
-            white-space: nowrap;
-        }
-
-        .role-badge.primary {
-            background: #667eea;
-        }
-
-        .role-badge.secondary {
-            background: #f0ad4e;
-        }
-
-        .role-badge.rotation {
-            background: #5cb85c;
-        }
-
-        .role-badge.admin {
-            background: #d9534f;
-        }
-
-        .role-badge.meeting {
-            background: #5bc0de;
-        }
-
-        .role-badge.supervision {
-            background: #764ba2;
+            color: #667eea;
         }
 
         .legend {
+            background: #f9f9f9;
+            padding: 12px;
+            border-radius: 6px;
+            margin-top: 16px;
+            font-size: 12px;
+        }
+
+        .legend-title {
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: #333;
+        }
+
+        .legend-items {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 15px;
-            margin-top: 30px;
-            padding: 20px;
-            background: #f5f5f5;
-            border-radius: 8px;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
         }
 
         .legend-item {
             display: flex;
             align-items: center;
-            gap: 10px;
-            font-size: 13px;
+            gap: 6px;
         }
 
-        .legend-color {
-            width: 30px;
-            height: 20px;
-            border-radius: 4px;
-        }
-
-        .info-box {
-            background: #e8f4f8;
-            border-left: 4px solid #667eea;
-            padding: 15px;
-            border-radius: 4px;
-            margin-bottom: 20px;
-            font-size: 13px;
-            color: #333;
-        }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 1000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-        }
-
-        .modal-header {
-            font-size: 20px;
-            font-weight: bold;
-            margin-bottom: 20px;
-            color: #333;
-        }
-
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-group label {
-            display: block;
-            margin-bottom: 5px;
-            font-weight: bold;
-            color: #333;
-        }
-
-        .form-group input,
-        .form-group select,
-        .form-group textarea {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
-            font-size: 14px;
-        }
-
-        .form-group textarea {
-            resize: vertical;
-            min-height: 100px;
-        }
-
-        .modal-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 20px;
-            justify-content: flex-end;
-        }
-
-        .btn-cancel {
-            background: #ccc;
-        }
-
-        .btn-cancel:hover {
-            background: #999;
-        }
-
-        @media (max-width: 768px) {
-            .container {
-                padding: 15px;
-            }
-
-            header {
-                flex-direction: column;
-                gap: 15px;
-                align-items: flex-start;
-            }
-
-            h1 {
-                font-size: 22px;
-            }
-
-            th, td {
-                padding: 8px;
-                font-size: 12px;
-            }
-
-            .role-badge {
-                font-size: 10px;
-                padding: 4px 8px;
-            }
-        }
-
-        .person-header {
-            font-weight: bold;
-            background: #e8eaf6;
-            color: #333;
-        }
-
-        .empty-cell {
-            color: #ccc;
-            font-style: italic;
-            font-size: 12px;
-        }
-
-        .coverage-status {
-            padding: 10px;
-            margin-top: 20px;
-            border-radius: 8px;
-            background: #f0f0f0;
-        }
-
-        .coverage-good {
-            border-left: 4px solid #5cb85c;
-        }
-
-        .coverage-warning {
-            border-left: 4px solid #f0ad4e;
-        }
-
-        .coverage-critical {
-            border-left: 4px solid #d9534f;
+        .legend-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 2px;
+            flex-shrink: 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="app-container">
         <header>
             <h1>📋 Schemaläggning</h1>
-            <div class="week-selector">
+            <div class="week-tabs">
                 <button class="week-btn active" onclick="setWeekType('odd')">Udda vecka</button>
                 <button class="week-btn" onclick="setWeekType('even')">Jämn vecka</button>
             </div>
         </header>
 
-        <div class="info-box">
-            <strong>💡 Tips:</strong> Växla mellan udda och jämna veckor för att se de olika rotationerna. Schemat uppdateras automatiskt baserat på vilka roller som är aktuella den veckan.
+        <div class="content">
+            <div class="export-buttons">
+                <button class="btn btn-primary" onclick="exportExcel()">📊 Excel</button>
+                <button class="btn btn-secondary" onclick="printSchedule()">🖨️ Skriv ut</button>
+            </div>
+
+            <div id="scheduleContainer"></div>
+
+            <div class="legend">
+                <div class="legend-title">Rolltyper:</div>
+                <div class="legend-items">
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #667eea;"></div>
+                        <span>Primär</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #f0ad4e;"></div>
+                        <span>Sekundär</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #5cb85c;"></div>
+                        <span>Rotation</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #d9534f;"></div>
+                        <span>Admin</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #5bc0de;"></div>
+                        <span>Möte</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-dot" style="background: #764ba2;"></div>
+                        <span>Handledning</span>
+                    </div>
+                </div>
+            </div>
         </div>
 
-        <div class="controls">
-            <button class="btn" onclick="exportPDF()">📥 Ladda ner PDF</button>
-            <button class="btn btn-secondary" onclick="exportExcel()">📊 Ladda ner Excel</button>
-        </div>
-
-        <div class="schedule-wrapper" id="scheduleContainer">
-            <!-- Schema genereras här av JavaScript -->
-        </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color" style="background: #667eea;"></div>
-                <span>Primär roll</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #f0ad4e;"></div>
-                <span>Sekundär roll</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #5cb85c;"></div>
-                <span>Rotation (växlar)</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #d9534f;"></div>
-                <span>Administration</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #5bc0de;"></div>
-                <span>Möte</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color" style="background: #764ba2;"></div>
-                <span>Handledning</span>
-            </div>
+        <div class="footer">
+            Vecka sparas automatiskt lokalt 💾
         </div>
     </div>
 
     <script>
-        let currentWeekType = 'odd'; // 'odd' eller 'even'
+        let currentWeekType = 'odd';
 
-        // Persondata
         const staff = {
             'Josefine': {
                 percentage: '50%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Chef' },
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Mottagning' },
-                    { type: 'rotation', time: '13:00-15:00', days: ['Ons'], name: 'MVC (var.ons)' },
-                    { type: 'rotation', time: 'enligt rotation', days: ['varierande'], name: 'TeleQ' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledare Sara' },
-                    { type: 'admin', time: 'enligt behov', days: ['Tis/Fre'], name: 'Administration (var.v)' }
+                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Chef/Mottagning' },
+                    { type: 'rotation', days: ['Ons'], name: 'MVC' },
+                    { type: 'rotation', days: ['Var'], name: 'TeleQ' },
+                    { type: 'supervision', days: ['Var'], name: 'H.sara' },
+                    { type: 'admin', days: ['T/F'], name: 'Admin' }
                 ]
             },
             'Max': {
                 percentage: '80%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'secondary', time: '20%', days: ['varierande'], name: 'MLA' },
-                    { type: 'rotation', time: 'var.vecka', days: ['varierande'], name: 'BVC (var.v)' },
-                    { type: 'meeting', time: '08:30-09:30', days: ['Tis'], name: 'Synergimöte' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledare Tom' },
-                    { type: 'admin', time: 'enligt behov', days: ['Tis/Fre'], name: 'Administration (var.v)' }
+                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
+                    { type: 'secondary', days: ['Var'], name: 'MLA' },
+                    { type: 'rotation', days: ['Var'], name: 'BVC' },
+                    { type: 'meeting', days: ['Tis'], name: 'Syn.möte' },
+                    { type: 'supervision', days: ['Var'], name: 'H.tom' },
+                    { type: 'admin', days: ['T/F'], name: 'Admin' }
                 ]
             },
             'Rita': {
                 percentage: '80%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'rotation', time: 'var.vecka', days: ['Ons'], name: 'MVC (var.ons)' },
-                    { type: 'meeting', time: 'fm', days: ['Tor'], name: 'Smärtteam' },
-                    { type: 'admin', time: 'enligt behov', days: ['Mån'], name: 'Administration' }
+                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
+                    { type: 'rotation', days: ['Ons'], name: 'MVC' },
+                    { type: 'meeting', days: ['Tor'], name: 'Smärt' },
+                    { type: 'admin', days: ['Mån'], name: 'Admin' }
                 ]
             },
             'Jens': {
                 percentage: '90%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
-                    { type: 'rotation', time: 'var.vecka', days: ['varierande'], name: 'BVC (var.v)' },
-                    { type: 'primary', time: '8-17', days: ['varierande'], name: 'Lillåhem' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledare Ingrid' },
-                    { type: 'admin', time: 'enligt behov', days: ['Mån/Fre'], name: 'Administration (var.v)' }
+                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Klinik' },
+                    { type: 'rotation', days: ['Var'], name: 'BVC' },
+                    { type: 'primary', days: ['Var'], name: 'Lillåhem' },
+                    { type: 'supervision', days: ['Var'], name: 'H.ingrid' },
+                    { type: 'admin', days: ['M/F'], name: 'Admin' }
                 ]
             },
             'Sara': {
                 percentage: 'ST',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['varierande'], name: 'Orsagården' },
-                    { type: 'rotation', time: 'enligt rotation', days: ['varierande'], name: 'TeleQ' },
-                    { type: 'admin', time: 'enligt behov', days: ['Tis'], name: 'Administration' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledning Josefine' }
+                    { type: 'primary', days: ['Var'], name: 'Orsagården' },
+                    { type: 'rotation', days: ['Var'], name: 'TeleQ' },
+                    { type: 'admin', days: ['Tis'], name: 'Admin' },
+                    { type: 'supervision', days: ['Var'], name: 'H.josefine' }
                 ]
             },
             'Tom': {
                 percentage: 'AT',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['varierande'], name: 'Akutmottagning' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledning Max' },
-                    { type: 'admin', time: 'enligt behov', days: ['motsatt Jens'], name: 'Administration' }
+                    { type: 'primary', days: ['Var'], name: 'Akutmott' },
+                    { type: 'supervision', days: ['Var'], name: 'H.max' },
+                    { type: 'admin', days: ['Var'], name: 'Admin' }
                 ]
             },
             'Ingrid': {
-                percentage: 'AT (från v.36)',
+                percentage: 'AT',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['varierande'], name: 'Akutmottagning' },
-                    { type: 'supervision', time: 'löpande', days: ['varierande'], name: 'Handledning Jens' },
-                    { type: 'admin', time: 'enligt behov', days: ['samma som Jens'], name: 'Administration' }
+                    { type: 'primary', days: ['Var'], name: 'Akutmott' },
+                    { type: 'supervision', days: ['Var'], name: 'H.jens' },
+                    { type: 'admin', days: ['Var'], name: 'Admin' }
                 ]
             },
             'Helena': {
                 percentage: '60%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['varierande'], name: 'Vårdgivare' },
-                    { type: 'secondary', time: '3h/vecka', days: ['bestäms senare'], name: 'Skolläkare' }
+                    { type: 'primary', days: ['Var'], name: 'Vårdgiv' },
+                    { type: 'secondary', days: ['Var'], name: 'Skollä' }
                 ]
             },
             'Sandra': {
                 percentage: '100%',
                 roles: [
-                    { type: 'primary', time: '8-17', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Mottagning/Admin' }
+                    { type: 'primary', days: ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'], name: 'Mottag/Admin' }
                 ]
             }
         };
@@ -501,19 +428,19 @@
             });
             event.target.classList.add('active');
             renderSchedule();
+            localStorage.setItem('schedulerWeekType', type);
         }
 
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
-            const times = ['08:00', '09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00'];
 
             let html = `
-                <table>
+                <table class="schedule-table">
                     <thead>
                         <tr>
                             <th>Person</th>
-                            ${days.map(day => `<th>${day}</th>`).join('')}
+                            ${days.map(day => `<th class="day-column">${day}</th>`).join('')}
                         </tr>
                     </thead>
                     <tbody>
@@ -522,28 +449,24 @@
             Object.keys(staff).forEach(person => {
                 html += `
                     <tr>
-                        <td class="person-header">${person}<br><small>${staff[person].percentage}</small></td>
+                        <td>
+                            <div class="person-name">${person}</div>
+                            <div class="person-pct">${staff[person].percentage}</div>
+                        </td>
                 `;
 
                 days.forEach(day => {
-                    const dayRoles = staff[person].roles.filter(role => {
-                        if (role.days.includes(day) || role.days.includes('varierande') || role.days.length === 0) {
-                            return true;
-                        }
-                        // Hantera rotationer
-                        if (role.name.includes('var.') || role.name.includes('var.v')) {
-                            return true;
-                        }
-                        return false;
-                    });
+                    const dayRoles = staff[person].roles.filter(role => 
+                        role.days.includes(day) || role.days.includes('Var')
+                    );
 
                     let cellContent = '';
                     if (dayRoles.length > 0) {
                         cellContent = dayRoles.map(role => {
-                            return `<div class="role-badge" style="background: ${getRoleColor(role.type)}; display: inline-block; margin: 2px;">${role.name}</div>`;
+                            return `<div class="role-item ${role.type}">${role.name}</div>`;
                         }).join('');
                     } else {
-                        cellContent = '<span class="empty-cell">-</span>';
+                        cellContent = '<span class="empty">-</span>';
                     }
 
                     html += `<td>${cellContent}</td>`;
@@ -560,10 +483,6 @@
             container.innerHTML = html;
         }
 
-        function exportPDF() {
-            alert('PDF-export kommer snart! För nu kan du använda din webbläsares print-funktion (Ctrl+P) för att spara som PDF.');
-        }
-
         function exportExcel() {
             const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
             let csv = 'Person,Procent,' + days.join(',') + '\n';
@@ -573,7 +492,7 @@
                 
                 days.forEach(day => {
                     const dayRoles = staff[person].roles.filter(role => 
-                        role.days.includes(day) || role.days.includes('varierande') || role.days.length === 0
+                        role.days.includes(day) || role.days.includes('Var')
                     );
                     const rolesStr = dayRoles.map(r => r.name).join('; ');
                     row += `,"${rolesStr}"`;
@@ -591,7 +510,21 @@
             document.body.removeChild(element);
         }
 
-        // Initial render
+        function printSchedule() {
+            window.print();
+        }
+
+        // Load saved week type
+        const savedWeek = localStorage.getItem('schedulerWeekType');
+        if (savedWeek) {
+            currentWeekType = savedWeek;
+            document.querySelectorAll('.week-btn').forEach((btn, idx) => {
+                if ((savedWeek === 'odd' && idx === 0) || (savedWeek === 'even' && idx === 1)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
         renderSchedule();
     </script>
 </body>
