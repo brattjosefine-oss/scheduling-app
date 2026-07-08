@@ -56,6 +56,10 @@
         .activity-chefstid { background-color: #6b7280; }
         .activity-ledig { background-color: #d1d5db; color: #6b7280; }
         
+        .lunch-slot {
+            background-color: #fef3c7 !important;
+        }
+        
         .warning-badge {
             display: inline-flex;
             align-items: center;
@@ -112,6 +116,8 @@
             ACTIVITIES.CHEFSTID,
             ACTIVITIES.LEDIG
         ];
+        
+        const LUNCH_TIMES = ['12:00', '12:30'];
         
         const FIXED_SLOTS = {
             'odd': {
@@ -257,6 +263,10 @@
             return h * 60 + m;
         }
         
+        function isLunchTime(time) {
+            return LUNCH_TIMES.includes(time);
+        }
+        
         function isPersonWorking(person, day, time) {
             const hours = store.getWorkingHours(person, store.currentWeek, day);
             if (hours === 'Ledig') return false;
@@ -307,61 +317,113 @@
             return map[activity] || 'activity-ledig';
         }
         
+        function getDayIndex(day) {
+            return DAYS.indexOf(day);
+        }
+        
+        function getDayForTime(timeIdx) {
+            const slotsPerDay = Math.ceil(TIME_SLOTS.length / DAYS.length);
+            return DAYS[Math.floor(timeIdx / slotsPerDay)];
+        }
+        
         // ============================================
         // BEMANNING CHECK
         // ============================================
+        
+        function countTeleqPerDay(day) {
+            let count = 0;
+            LUNCH_TIMES.forEach(time => {
+                STAFF.forEach(person => {
+                    if (isPersonWorking(person, day, time) && 
+                        !isFixedSlot(person, day, time) &&
+                        store.getActivity(person, day, time) === ACTIVITIES.TELEQ) {
+                        count++;
+                    }
+                });
+            });
+            return count;
+        }
         
         function checkBemanning() {
             const warnings = [];
             
             DAYS.forEach(day => {
-                TIME_SLOTS.forEach(time => {
-                    // Check AKUT coverage (critical)
-                    const akutCount = STAFF.filter(person => 
-                        isPersonWorking(person, day, time) && 
-                        !isFixedSlot(person, day, time) &&
-                        store.getActivity(person, day, time) === ACTIVITIES.AKUT
-                    ).length;
-                    
-                    if (akutCount === 0 && isImportantAkutTime(day, time)) {
+                // Check TELEQ - should have exactly 2 slots per day (mån-ons, fre)
+                if (day !== 'Tor') {
+                    const teleqCount = countTeleqPerDay(day);
+                    if (teleqCount < 2) {
                         warnings.push({
                             type: 'critical',
-                            message: `⚠️ Akut saknas ${day} ${time}`,
-                            day,
-                            time
+                            message: `⚠️ TeleQ saknas ${day} (${teleqCount}/2)`,
+                            day
                         });
                     }
-                    
-                    // Check TELEQ coverage
-                    if (!isThursday(day)) {
-                        const teleqCount = STAFF.filter(person => 
+                }
+                
+                // Check AKUT coverage during important times
+                TIME_SLOTS.forEach(time => {
+                    if (!isLunchTime(time) && isImportantAkutTime(day, time)) {
+                        const akutCount = STAFF.filter(person => 
                             isPersonWorking(person, day, time) && 
                             !isFixedSlot(person, day, time) &&
-                            store.getActivity(person, day, time) === ACTIVITIES.TELEQ
+                            store.getActivity(person, day, time) === ACTIVITIES.AKUT
                         ).length;
                         
-                        if (teleqCount === 0) {
+                        if (akutCount === 0) {
                             warnings.push({
-                                type: 'alert',
-                                message: `⚠️ TeleQ saknas ${day} ${time}`,
+                                type: 'critical',
+                                message: `🚨 Akut saknas ${day} ${time}`,
                                 day,
                                 time
                             });
                         }
                     }
                 });
+                
+                // Check lunch rules
+                const lunchReceptCount = LUNCH_TIMES.filter(time => {
+                    return STAFF.some(person => 
+                        isPersonWorking(person, day, time) && 
+                        !isFixedSlot(person, day, time) &&
+                        store.getActivity(person, day, time) === ACTIVITIES.RECEPT
+                    );
+                }).length;
+                
+                if (lunchReceptCount > 1) {
+                    warnings.push({
+                        type: 'alert',
+                        message: `⚠️ För många Recept under lunch ${day} (${lunchReceptCount}/1)`,
+                        day
+                    });
+                }
             });
             
             return warnings;
         }
         
-        function isThursday(day) {
-            return day === 'Tor';
-        }
-        
         function isImportantAkutTime(day, time) {
             const hour = parseInt(time.split(':')[0]);
             return hour >= 8 && hour < 17;
+        }
+        
+        function validateLunchActivity(person, day, time, activity) {
+            if (!isLunchTime(time)) return true;
+            
+            // Only Recept allowed during lunch
+            if (activity !== ACTIVITIES.RECEPT && activity !== ACTIVITIES.LEDIG) {
+                return false;
+            }
+            
+            // Max 1 of 2 lunch slots can have Recept
+            if (activity === ACTIVITIES.RECEPT) {
+                const otherLunchTime = time === '12:00' ? '12:30' : '12:00';
+                const otherActivity = store.getActivity(person, day, otherLunchTime);
+                if (otherActivity === ACTIVITIES.RECEPT) {
+                    return false;
+                }
+            }
+            
+            return true;
         }
         
         // ============================================
@@ -429,19 +491,19 @@
             html += '<div class="slot bg-gray-900 text-white font-bold"></div>';
             let currentDay = '';
             TIME_SLOTS.forEach((time, idx) => {
-                const day = DAYS[Math.floor(idx / TIME_SLOTS.length * DAYS.length)];
+                const day = getDayForTime(idx);
                 if (day !== currentDay) {
                     currentDay = day;
-                    html += `<div class="slot bg-blue-600 text-white font-bold border-l-4 border-white">${day}</div>`;
+                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold border-l-4 border-white">${day}</div>`;
                 } else {
-                    html += `<div class="slot bg-blue-600 text-white font-bold"></div>`;
+                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold"></div>`;
                 }
             });
             
             // Time row
             html += '<div class="slot bg-gray-900 text-white font-bold">Tid</div>';
             TIME_SLOTS.forEach(time => {
-                html += `<div class="slot bg-gray-100 text-gray-600 font-bold text-xs">${time}</div>`;
+                html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-gray-100'} text-gray-600 font-bold text-xs">${time}</div>`;
             });
             
             // Person rows
@@ -449,10 +511,11 @@
                 html += `<div class="slot bg-gray-100 font-bold text-left pl-3">${person}</div>`;
                 
                 TIME_SLOTS.forEach(time => {
-                    const day = getDayForTime(time);
+                    const day = getDayForTime(TIME_SLOTS.indexOf(time));
                     const isWorking = isPersonWorking(person, day, time);
                     const isFixed = isFixedSlot(person, day, time);
                     const activity = store.getActivity(person, day, time);
+                    const isLunch = isLunchTime(time);
                     
                     let slotContent = '';
                     
@@ -462,8 +525,17 @@
                     } else if (!isWorking) {
                         slotContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
-                        const canSetChefstid = person === 'Josefine';
-                        const options = canSetChefstid ? ACTIVITY_OPTIONS : ACTIVITY_OPTIONS.filter(a => a !== ACTIVITIES.CHEFSTID);
+                        let options = ACTIVITY_OPTIONS;
+                        
+                        // Limit options during lunch
+                        if (isLunch) {
+                            options = [ACTIVITIES.RECEPT, ACTIVITIES.LEDIG];
+                        }
+                        
+                        // Only Josefine can have Chefstid
+                        if (person !== 'Josefine') {
+                            options = options.filter(a => a !== ACTIVITIES.CHEFSTID);
+                        }
                         
                         slotContent = `
                             <select onchange="app.setActivity('${person}', '${day}', '${time}', this.value)" class="w-full h-full bg-transparent text-white font-bold text-xs cursor-pointer border-none focus:outline-none">
@@ -473,17 +545,12 @@
                         slotContent = `<div class="slot-activity ${getActivityClass(activity)}">${slotContent}</div>`;
                     }
                     
-                    html += `<div class="slot">${slotContent}</div>`;
+                    html += `<div class="slot ${isLunch ? 'lunch-slot' : ''}">${slotContent}</div>`;
                 });
             });
             
             html += '</div></div>';
             return html;
-        }
-        
-        function getDayForTime(time) {
-            const idx = TIME_SLOTS.indexOf(time);
-            return DAYS[Math.floor(idx / (TIME_SLOTS.length / DAYS.length))];
         }
         
         function renderStatistics() {
@@ -577,6 +644,11 @@
             },
             
             setActivity(person, day, time, activity) {
+                if (!validateLunchActivity(person, day, time, activity)) {
+                    alert('❌ Max 1 Recept under lunch (12:00-13:00)');
+                    this.render();
+                    return;
+                }
                 store.setActivity(person, day, time, activity);
                 this.render();
             },
@@ -611,6 +683,9 @@
                                     <div class="space-y-4">
                                         <div class="bg-white p-4 rounded-lg border border-gray-200">
                                             ${renderWarnings()}
+                                        </div>
+                                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
+                                            <strong>Lunch (12:00-13:00):</strong> Endast Recept tillåtet, max 1 av 2 halvtimmar
                                         </div>
                                         ${renderScheduleTable()}
                                     </div>
