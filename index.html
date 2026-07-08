@@ -112,6 +112,31 @@
             padding: 12px;
         }
 
+        .day-tabs {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+            flex-wrap: wrap;
+        }
+
+        .day-tab {
+            padding: 10px 16px;
+            border: 2px solid #ddd;
+            background: white;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 13px;
+            color: #666;
+            transition: all 0.3s;
+        }
+
+        .day-tab.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
         .schedule-table {
             width: 100%;
             border-collapse: collapse;
@@ -131,31 +156,25 @@
         }
 
         .schedule-table th {
-            padding: 8px;
+            padding: 10px;
             text-align: center;
             font-weight: bold;
             border: 1px solid #556;
-            font-size: 11px;
+            font-size: 12px;
         }
 
         .schedule-table td {
-            padding: 6px;
+            padding: 8px;
             border: 1px solid #ddd;
             text-align: center;
-            height: 50px;
-        }
-
-        .day-header {
-            background: #764ba2 !important;
-            font-weight: bold;
-            border-left: 3px solid white;
+            min-height: 70px;
         }
 
         .time-cell {
             background: #f9f9f9;
             font-weight: bold;
             color: #667eea;
-            font-size: 11px;
+            font-size: 12px;
         }
 
         .person-cell {
@@ -163,22 +182,24 @@
             font-weight: bold;
             color: #333;
             text-align: left;
-            padding-left: 8px;
+            padding-left: 12px;
             position: sticky;
             left: 0;
             z-index: 9;
+            min-width: 100px;
         }
 
         .slot-select {
             width: 100%;
             height: 100%;
-            border: none;
-            padding: 4px;
+            border: 1px solid #ddd;
+            padding: 6px;
             cursor: pointer;
-            font-size: 11px;
+            font-size: 12px;
             background: white;
             color: #333;
             border-radius: 4px;
+            font-weight: bold;
         }
 
         .slot-select.fixed {
@@ -233,7 +254,7 @@
         }
 
         .day-time-input input {
-            padding: 6px;
+            padding: 8px;
             border: 1px solid #ddd;
             border-radius: 4px;
             font-size: 12px;
@@ -339,42 +360,20 @@
             }
 
             .schedule-table {
-                font-size: 10px;
+                font-size: 11px;
             }
 
             .slot-select {
-                font-size: 9px;
+                font-size: 11px;
             }
 
             .day-times {
                 grid-template-columns: 1fr;
             }
-        }
 
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.5);
-            z-index: 2000;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .modal.active {
-            display: flex;
-        }
-
-        .modal-content {
-            background: white;
-            padding: 20px;
-            border-radius: 12px;
-            max-width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
+            .schedule-table td {
+                min-height: 60px;
+            }
         }
 
         .legend {
@@ -386,11 +385,6 @@
             border-radius: 6px;
             font-size: 11px;
             margin-bottom: 12px;
-        }
-
-        .day-separator {
-            border-left: 4px solid #667eea;
-            margin-left: 8px;
         }
     </style>
 </head>
@@ -420,6 +414,9 @@
                         <strong>Grå:</strong> Ej arbetad tid
                     </div>
                 </div>
+
+                <div class="day-tabs" id="dayTabs"></div>
+
                 <div id="scheduleContainer"></div>
             </div>
 
@@ -445,6 +442,7 @@
 
     <script>
         let currentWeekType = 'odd';
+        let currentDay = 'Mån';
         let schedule = {};
         let workingHours = {};
 
@@ -542,6 +540,7 @@
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
+            renderDayTabs();
             renderSchedule();
             updateStats();
             saveSchedule();
@@ -562,6 +561,22 @@
             } else if (tab === 'stats') {
                 updateStats();
             }
+        }
+
+        function setDay(day) {
+            currentDay = day;
+            renderDayTabs();
+            renderSchedule();
+        }
+
+        function renderDayTabs() {
+            const container = document.getElementById('dayTabs');
+            let html = '';
+            days.forEach(day => {
+                const isActive = day === currentDay ? 'active' : '';
+                html += `<button class="day-tab ${isActive}" onclick="setDay('${day}')">${day}</button>`;
+            });
+            container.innerHTML = html;
         }
 
         function isWorking(person, day, time) {
@@ -609,8 +624,8 @@
             return item ? item.name : '';
         }
 
-        function updateScheduleValue(person, day, time, value) {
-            schedule[person][day][time] = value;
+        function updateScheduleValue(person, time, value) {
+            schedule[person][currentDay][time] = value;
             saveSchedule();
             updateQuickCoverage();
         }
@@ -618,18 +633,10 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             
-            let html = `<table class="schedule-table"><thead><tr><th>Person</th>`;
+            let html = `<table class="schedule-table"><thead><tr><th>Person / Tid</th>`;
 
-            days.forEach((day, idx) => {
-                html += `<th class="day-header" style="border-left: ${idx === 0 ? 'none' : '3px solid white'}">${day}</th>`;
-            });
-
-            html += `</tr><tr><th>Tid</th>`;
-            
-            days.forEach(() => {
-                slots.forEach(slot => {
-                    html += `<th class="time-cell">${slot}</th>`;
-                });
+            slots.forEach(slot => {
+                html += `<th class="time-cell">${slot}</th>`;
             });
 
             html += `</tr></thead><tbody>`;
@@ -637,30 +644,23 @@
             staff.forEach(person => {
                 html += `<tr><td class="person-cell">${person}</td>`;
 
-                days.forEach((day, dayIdx) => {
-                    slots.forEach((time, timeIdx) => {
-                        const isFixedSlot = isFixed(person, day, time);
-                        const fixedName = isFixedSlot ? getFixedName(person, day, time) : '';
-                        const isWorkingTime = isWorking(person, day, time);
-                        const value = schedule[person][day][time];
+                slots.forEach((time) => {
+                    const isFixedSlot = isFixed(person, currentDay, time);
+                    const fixedName = isFixedSlot ? getFixedName(person, currentDay, time) : '';
+                    const isWorkingTime = isWorking(person, currentDay, time);
+                    const value = schedule[person][currentDay][time];
 
-                        let tdClass = '';
-                        if (dayIdx > 0 && timeIdx === 0) {
-                            tdClass = 'day-separator';
-                        }
-
-                        if (isFixedSlot) {
-                            html += `<td class="${tdClass}"><input type="text" class="slot-select fixed" value="${fixedName}" disabled></td>`;
-                        } else if (!isWorkingTime) {
-                            html += `<td class="${tdClass}"><input type="text" class="slot-select" disabled value="-"></td>`;
-                        } else {
-                            html += `<td class="${tdClass}"><select class="slot-select" onchange="updateScheduleValue('${person}', '${day}', '${time}', this.value)">`;
-                            flexOptions.forEach(opt => {
-                                html += `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`;
-                            });
-                            html += `</select></td>`;
-                        }
-                    });
+                    if (isFixedSlot) {
+                        html += `<td><input type="text" class="slot-select fixed" value="${fixedName}" disabled></td>`;
+                    } else if (!isWorkingTime) {
+                        html += `<td><input type="text" class="slot-select" disabled value="-"></td>`;
+                    } else {
+                        html += `<td><select class="slot-select" onchange="updateScheduleValue('${person}', '${time}', this.value)">`;
+                        flexOptions.forEach(opt => {
+                            html += `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`;
+                        });
+                        html += `</select></td>`;
+                    }
                 });
 
                 html += `</tr>`;
@@ -826,6 +826,7 @@
 
         // Init
         initData();
+        renderDayTabs();
         renderSchedule();
     </script>
 </body>
