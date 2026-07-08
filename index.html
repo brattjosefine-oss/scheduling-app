@@ -145,6 +145,12 @@
             height: 50px;
         }
 
+        .day-header {
+            background: #764ba2 !important;
+            font-weight: bold;
+            border-left: 3px solid white;
+        }
+
         .time-cell {
             background: #f9f9f9;
             font-weight: bold;
@@ -158,6 +164,9 @@
             color: #333;
             text-align: left;
             padding-left: 8px;
+            position: sticky;
+            left: 0;
+            z-index: 9;
         }
 
         .slot-select {
@@ -179,8 +188,94 @@
             cursor: not-allowed;
         }
 
-        .slot-select option {
-            padding: 4px;
+        .slot-select:disabled {
+            background: #e0e0e0;
+            color: #999;
+            cursor: not-allowed;
+        }
+
+        .settings-panel {
+            padding: 16px;
+            overflow-y: auto;
+        }
+
+        .person-section {
+            background: white;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            border: 1px solid #ddd;
+        }
+
+        .person-section h3 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+
+        .day-times {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .day-time-input {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .day-time-input label {
+            font-size: 11px;
+            font-weight: bold;
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .day-time-input input {
+            padding: 6px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 12px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 12px;
+        }
+
+        .stat-item {
+            background: #f5f5f5;
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 12px;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-bottom: 4px;
+        }
+
+        .stat-value {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .stat-bar {
+            background: #ddd;
+            height: 4px;
+            border-radius: 2px;
+            margin-top: 4px;
+            overflow: hidden;
+        }
+
+        .stat-bar-fill {
+            height: 100%;
+            background: #667eea;
+            transition: width 0.3s;
         }
 
         .coverage-panel {
@@ -209,21 +304,6 @@
             background: #f5f5f5;
         }
 
-        .coverage-good {
-            background: #d4edda;
-            color: #155724;
-        }
-
-        .coverage-warning {
-            background: #fff3cd;
-            color: #856404;
-        }
-
-        .coverage-bad {
-            background: #f8d7da;
-            color: #721c24;
-        }
-
         .controls {
             display: flex;
             gap: 10px;
@@ -248,41 +328,9 @@
             color: white;
         }
 
-        .btn-primary:active {
-            transform: scale(0.98);
-        }
-
         .btn-secondary {
             background: #f0ad4e;
             color: white;
-        }
-
-        .btn-secondary:active {
-            transform: scale(0.98);
-        }
-
-        .legend {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 8px;
-            padding: 12px;
-            background: #f9f9f9;
-            border-radius: 6px;
-            font-size: 11px;
-            margin-bottom: 12px;
-        }
-
-        .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        .legend-color {
-            width: 20px;
-            height: 16px;
-            border-radius: 3px;
-            flex-shrink: 0;
         }
 
         @media (max-width: 480px) {
@@ -294,18 +342,12 @@
                 font-size: 10px;
             }
 
-            .schedule-table th {
-                font-size: 9px;
-                padding: 4px;
-            }
-
-            .schedule-table td {
-                padding: 4px;
-                height: 45px;
-            }
-
             .slot-select {
                 font-size: 9px;
+            }
+
+            .day-times {
+                grid-template-columns: 1fr;
             }
         }
 
@@ -334,12 +376,28 @@
             max-height: 80vh;
             overflow-y: auto;
         }
+
+        .legend {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            padding: 12px;
+            background: #f9f9f9;
+            border-radius: 6px;
+            font-size: 11px;
+            margin-bottom: 12px;
+        }
+
+        .day-separator {
+            border-left: 4px solid #667eea;
+            margin-left: 8px;
+        }
     </style>
 </head>
 <body>
     <div class="app-container">
         <header>
-            <h1>📋 Schemaläggning - Detaljerad</h1>
+            <h1>📋 Schemaläggning</h1>
             <div class="week-tabs">
                 <button class="week-btn active" onclick="setWeekType('odd')">Udda vecka</button>
                 <button class="week-btn" onclick="setWeekType('even')">Jämn vecka</button>
@@ -349,29 +407,28 @@
         <div class="content">
             <div class="tabs-container">
                 <button class="tab-btn active" onclick="showTab('schedule')">📅 Schema</button>
-                <button class="tab-btn" onclick="showTab('coverage')">✅ Täckning</button>
+                <button class="tab-btn" onclick="showTab('settings')">⚙️ Inställningar</button>
+                <button class="tab-btn" onclick="showTab('stats')">📊 Statistik</button>
             </div>
 
             <div id="scheduleTab" class="schedule-scroll">
                 <div class="legend">
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: #e8eaf6;"></div>
-                        <span>Fast slot</span>
+                    <div>
+                        <strong>Flexibla:</strong> TeleQ, Akut, Mottagning, Recept, Admin, Telefon, Möte
                     </div>
-                    <div class="legend-item">
-                        <div class="legend-color" style="background: white; border: 1px solid #ddd;"></div>
-                        <span>Flexibelt slot</span>
+                    <div>
+                        <strong>Grå:</strong> Ej arbetad tid
                     </div>
                 </div>
-
                 <div id="scheduleContainer"></div>
             </div>
 
-            <div id="coverageTab" class="schedule-scroll" style="display: none;">
-                <div class="coverage-panel" style="max-height: none; padding: 16px;">
-                    <div class="coverage-title">Täckningskontroll för veckan</div>
-                    <div id="coverageContent"></div>
-                </div>
+            <div id="settingsTab" class="schedule-scroll" style="display: none;">
+                <div id="settingsContainer"></div>
+            </div>
+
+            <div id="statsTab" class="schedule-scroll" style="display: none;">
+                <div id="statsContainer"></div>
             </div>
 
             <div class="coverage-panel">
@@ -389,56 +446,56 @@
     <script>
         let currentWeekType = 'odd';
         let schedule = {};
+        let workingHours = {};
 
-        // Fasta aktiviteter
         const fixedSlots = {
             'odd': {
                 'Max': [
-                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte', type: 'möte' },
-                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård', type: 'fixed' },
-                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte' },
+                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC' }
                 ],
                 'Jens': [
-                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond', type: 'fixed' },
-                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC' }
                 ],
                 'Sara': [
-                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården', type: 'fixed' }
+                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården' }
                 ],
                 'Josefine': [
-                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC', type: 'fixed' }
+                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC' }
                 ],
                 'Helena': [
-                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare', type: 'fixed' }
+                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare' }
                 ]
             },
             'even': {
                 'Max': [
-                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte', type: 'möte' },
-                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård', type: 'fixed' },
-                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC', type: 'fixed' }
+                    { day: 'Tis', start: '08:30', end: '09:30', name: 'Synergimöte' },
+                    { day: 'Tis', start: '13:00', end: '14:30', name: 'Hemsjukvård' },
+                    { day: 'Ons', start: '08:00', end: '12:00', name: 'BVC' }
                 ],
                 'Jens': [
-                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond', type: 'fixed' }
+                    { day: 'Tis', start: '09:00', end: '12:00', name: 'Lillåhem-rond' }
                 ],
                 'Sara': [
-                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården', type: 'fixed' }
+                    { day: 'Ons', start: '09:00', end: '12:00', name: 'Orsagården' }
                 ],
                 'Rita': [
-                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC', type: 'fixed' }
+                    { day: 'Ons', start: '13:00', end: '15:00', name: 'MVC' }
                 ],
                 'Helena': [
-                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare', type: 'fixed' }
+                    { day: 'Tor', start: '09:00', end: '12:00', name: 'Skolläkare' }
                 ]
             }
         };
 
         const staff = ['Josefine', 'Max', 'Jens', 'Rita', 'Sara', 'Tom', 'Ingrid', 'Helena', 'Sandra'];
-        const flexOptions = ['Ledig', 'TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte'];
+        const flexOptions = ['Ledig', 'TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte', 'Chefstid'];
         const days = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
         const slots = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
 
-        function initSchedule() {
+        function initData() {
             if (!localStorage.getItem('schedule')) {
                 const emptySchedule = {};
                 staff.forEach(person => {
@@ -455,11 +512,28 @@
             } else {
                 schedule = JSON.parse(localStorage.getItem('schedule'));
             }
+
+            if (!localStorage.getItem('workingHours')) {
+                const defaultHours = {};
+                staff.forEach(person => {
+                    defaultHours[person] = {
+                        'odd': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' },
+                        'even': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' }
+                    };
+                });
+                workingHours = defaultHours;
+                saveWorkingHours();
+            } else {
+                workingHours = JSON.parse(localStorage.getItem('workingHours'));
+            }
         }
 
         function saveSchedule() {
             localStorage.setItem('schedule', JSON.stringify(schedule));
-            localStorage.setItem('scheduleWeekType', currentWeekType);
+        }
+
+        function saveWorkingHours() {
+            localStorage.setItem('workingHours', JSON.stringify(workingHours));
         }
 
         function setWeekType(type) {
@@ -469,21 +543,41 @@
             });
             event.target.classList.add('active');
             renderSchedule();
+            updateStats();
             saveSchedule();
         }
 
         function showTab(tab) {
             document.getElementById('scheduleTab').style.display = tab === 'schedule' ? 'block' : 'none';
-            document.getElementById('coverageTab').style.display = tab === 'coverage' ? 'block' : 'none';
+            document.getElementById('settingsTab').style.display = tab === 'settings' ? 'block' : 'none';
+            document.getElementById('statsTab').style.display = tab === 'stats' ? 'block' : 'none';
             
             document.querySelectorAll('.tab-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             event.target.classList.add('active');
 
-            if (tab === 'coverage') {
-                updateCoveragePanel();
+            if (tab === 'settings') {
+                renderSettings();
+            } else if (tab === 'stats') {
+                updateStats();
             }
+        }
+
+        function isWorking(person, day, time) {
+            const hours = workingHours[person]?.[currentWeekType]?.[day];
+            if (!hours || hours === 'Ledig') return false;
+
+            const [startStr, endStr] = hours.split('-');
+            const [startH, startM] = startStr.split(':').map(Number);
+            const [endH, endM] = endStr.split(':').map(Number);
+            const [h, m] = time.split(':').map(Number);
+
+            const slotStart = startH * 60 + startM;
+            const slotEnd = endH * 60 + endM;
+            const currentTime = h * 60 + m;
+
+            return currentTime >= slotStart && currentTime < slotEnd;
         }
 
         function isFixed(person, day, time) {
@@ -524,20 +618,15 @@
         function renderSchedule() {
             const container = document.getElementById('scheduleContainer');
             
-            let html = `
-                <table class="schedule-table">
-                    <thead>
-                        <tr>
-                            <th style="position: sticky; left: 0; z-index: 11;">Person</th>
-            `;
+            let html = `<table class="schedule-table"><thead><tr><th>Person</th>`;
 
-            days.forEach(day => {
-                html += `<th colspan="11">${day}</th>`;
+            days.forEach((day, idx) => {
+                html += `<th class="day-header" style="border-left: ${idx === 0 ? 'none' : '3px solid white'}">${day}</th>`;
             });
 
-            html += `</tr><tr><th style="position: sticky; left: 0; z-index: 11;"></th>`;
+            html += `</tr><tr><th>Tid</th>`;
             
-            days.forEach(day => {
+            days.forEach(() => {
                 slots.forEach(slot => {
                     html += `<th class="time-cell">${slot}</th>`;
                 });
@@ -546,20 +635,26 @@
             html += `</tr></thead><tbody>`;
 
             staff.forEach(person => {
-                html += `<tr>
-                    <td class="person-cell" style="position: sticky; left: 0; z-index: 9; background: #f0f0f0;">${person}</td>
-                `;
+                html += `<tr><td class="person-cell">${person}</td>`;
 
-                days.forEach(day => {
-                    slots.forEach(time => {
+                days.forEach((day, dayIdx) => {
+                    slots.forEach((time, timeIdx) => {
                         const isFixedSlot = isFixed(person, day, time);
                         const fixedName = isFixedSlot ? getFixedName(person, day, time) : '';
+                        const isWorkingTime = isWorking(person, day, time);
                         const value = schedule[person][day][time];
 
+                        let tdClass = '';
+                        if (dayIdx > 0 && timeIdx === 0) {
+                            tdClass = 'day-separator';
+                        }
+
                         if (isFixedSlot) {
-                            html += `<td class="time-cell"><input type="text" class="slot-select fixed" value="${fixedName}" disabled></td>`;
+                            html += `<td class="${tdClass}"><input type="text" class="slot-select fixed" value="${fixedName}" disabled></td>`;
+                        } else if (!isWorkingTime) {
+                            html += `<td class="${tdClass}"><input type="text" class="slot-select" disabled value="-"></td>`;
                         } else {
-                            html += `<td><select class="slot-select" onchange="updateScheduleValue('${person}', '${day}', '${time}', this.value)">`;
+                            html += `<td class="${tdClass}"><select class="slot-select" onchange="updateScheduleValue('${person}', '${day}', '${time}', this.value)">`;
                             flexOptions.forEach(opt => {
                                 html += `<option value="${opt}" ${value === opt ? 'selected' : ''}>${opt}</option>`;
                             });
@@ -574,6 +669,97 @@
             html += `</tbody></table>`;
             container.innerHTML = html;
             updateQuickCoverage();
+        }
+
+        function renderSettings() {
+            const container = document.getElementById('settingsContainer');
+            let html = '<div class="settings-panel">';
+
+            staff.forEach(person => {
+                html += `<div class="person-section">
+                    <h3>${person}</h3>
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 8px;">Udda vecka</div>
+                    <div class="day-times">`;
+
+                days.forEach(day => {
+                    const hours = workingHours[person]?.['odd']?.[day] || '08:00-17:00';
+                    html += `<div class="day-time-input">
+                        <label>${day}</label>
+                        <input type="text" value="${hours}" placeholder="08:00-17:00" 
+                               onchange="updateWorkingHours('${person}', 'odd', '${day}', this.value)">
+                    </div>`;
+                });
+
+                html += `</div>
+                    <div style="font-size: 11px; font-weight: bold; margin-bottom: 8px;">Jämn vecka</div>
+                    <div class="day-times">`;
+
+                days.forEach(day => {
+                    const hours = workingHours[person]?.['even']?.[day] || '08:00-17:00';
+                    html += `<div class="day-time-input">
+                        <label>${day}</label>
+                        <input type="text" value="${hours}" placeholder="08:00-17:00" 
+                               onchange="updateWorkingHours('${person}', 'even', '${day}', this.value)">
+                    </div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
+        }
+
+        function updateWorkingHours(person, week, day, value) {
+            if (!workingHours[person]) workingHours[person] = {};
+            if (!workingHours[person][week]) workingHours[person][week] = {};
+            workingHours[person][week][day] = value || 'Ledig';
+            saveWorkingHours();
+            renderSchedule();
+            updateStats();
+        }
+
+        function updateStats() {
+            const container = document.getElementById('statsContainer');
+            let html = '<div class="settings-panel">';
+
+            staff.forEach(person => {
+                const stats = {};
+                flexOptions.forEach(opt => stats[opt] = 0);
+                
+                let totalSlots = 0;
+                days.forEach(day => {
+                    slots.forEach(time => {
+                        if (isWorking(person, day, time) && !isFixed(person, day, time)) {
+                            totalSlots++;
+                            const val = schedule[person][day][time];
+                            if (val) stats[val]++;
+                        }
+                    });
+                });
+
+                html += `<div class="person-section">
+                    <h3>${person}</h3>
+                    <div class="stats-grid">`;
+
+                ['Mottagning', 'Admin', 'Telefon', 'TeleQ', 'Akut', 'Recept', 'Möte', 'Chefstid'].forEach(role => {
+                    const count = stats[role] || 0;
+                    const percentage = totalSlots > 0 ? Math.round((count / totalSlots) * 100) : 0;
+                    
+                    html += `<div class="stat-item">
+                        <div class="stat-label">${role}</div>
+                        <div class="stat-value">${percentage}%</div>
+                        <div class="stat-bar">
+                            <div class="stat-bar-fill" style="width: ${percentage}%"></div>
+                        </div>
+                    </div>`;
+                });
+
+                html += `</div></div>`;
+            });
+
+            html += '</div>';
+            container.innerHTML = html;
         }
 
         function updateQuickCoverage() {
@@ -593,35 +779,9 @@
                     });
                 });
 
-                const coverage = count > 0 ? `${count} slot` : 'Ingen';
-                const className = count > 0 ? 'coverage-good' : 'coverage-bad';
-                html += `<div class="coverage-item ${className}"><span>${role}:</span><span>${coverage}</span></div>`;
-            });
-
-            container.innerHTML = html;
-        }
-
-        function updateCoveragePanel() {
-            const container = document.getElementById('coverageContent');
-            const roles = ['TeleQ', 'Akut', 'Mottagning', 'Recept', 'Admin', 'Telefon', 'Möte'];
-            
-            let html = '';
-            roles.forEach(role => {
-                const assignments = [];
-                staff.forEach(person => {
-                    days.forEach(day => {
-                        slots.forEach(time => {
-                            if (schedule[person][day][time] === role) {
-                                assignments.push(`${person} (${day} ${time})`);
-                            }
-                        });
-                    });
-                });
-
-                const className = assignments.length > 0 ? 'coverage-good' : 'coverage-bad';
-                html += `<div class="coverage-item ${className}">
-                    <strong>${role}:</strong> ${assignments.length > 0 ? assignments.join(', ') : 'Inte tilldelad'}
-                </div>`;
+                const coverage = count > 0 ? `${count}` : '0';
+                const className = count > 0 ? 'coverage-good' : '';
+                html += `<div class="coverage-item ${className}" style="background: ${count > 0 ? '#d4edda' : '#f8d7da'};"><span>${role}:</span><span>${coverage} slot</span></div>`;
             });
 
             container.innerHTML = html;
@@ -659,13 +819,13 @@
         function resetSchedule() {
             if (confirm('Är du säker på att du vill återställa schemat?')) {
                 localStorage.removeItem('schedule');
-                initSchedule();
+                initData();
                 renderSchedule();
             }
         }
 
         // Init
-        initSchedule();
+        initData();
         renderSchedule();
     </script>
 </body>
