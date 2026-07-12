@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Compact table borders */
+.schedule-cell {
+  min-height: 44px;
+}
+
+/* Smooth transitions on activity cells */
+.activity-cell {
+  transition: background-color 0.15s ease;
+}
