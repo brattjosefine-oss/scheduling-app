@@ -92,6 +92,13 @@
         const STAFF = ['Josefine', 'Max', 'Jens', 'Rita', 'Sara', 'Tom', 'Ingrid', 'Helena', 'Sandra'];
         const DAYS = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
         const TIME_SLOTS = ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+        const TIME_RANGE_PATTERN = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/;
+        const WORKING_HOURS_ERROR = [
+            'Fel: ange arbetstid som HH:MM-HH:MM.',
+            '30-minuterssteg krävs.',
+            `Senaste sluttid är ${TIME_SLOTS[TIME_SLOTS.length - 1]}.`,
+            'Starttiden måste vara före sluttiden, eller använd Ledig.'
+        ].join('\n');
         
         const ACTIVITIES = {
             AKUT: 'Akut',
@@ -282,6 +289,15 @@
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
         }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
         
         function isLunchTime(time) {
             return LUNCH_TIMES.includes(time);
@@ -440,7 +456,7 @@
         function validateWorkingHours(hours) {
             if (hours === 'Ledig') return true;
 
-            const match = hours.match(/^(\d{2}:\d{2})-(\d{2}:\d{2})$/);
+            const match = hours.match(TIME_RANGE_PATTERN);
             if (!match) return false;
 
             const [, start, end] = match;
@@ -519,8 +535,8 @@
             return `
                 <div class="bg-white rounded-lg border border-gray-200 p-2">
                     <div class="flex flex-wrap gap-2">
-                        ${DAYS.map(day => `
-                            <button onclick="app.selectDay('${day}')" class="px-4 py-2 rounded-lg font-semibold transition-colors ${store.getCurrentDay() === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                        ${DAYS.map((day, index) => `
+                            <button onclick="app.selectDayByIndex(${index})" class="px-4 py-2 rounded-lg font-semibold transition-colors ${store.getCurrentDay() === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
                                 ${day}
                             </button>
                         `).join('')}
@@ -551,7 +567,8 @@
                     
                     if (isFixed) {
                         const fixedName = getFixedSlotName(person, day, time);
-                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${fixedName}">${fixedName}</div>`;
+                        const safeFixedName = escapeHtml(fixedName);
+                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${safeFixedName}">${safeFixedName}</div>`;
                     } else if (!isWorking) {
                         slotContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
@@ -675,6 +692,10 @@
             selectDay(day) {
                 store.setCurrentDay(day);
             },
+
+            selectDayByIndex(index) {
+                this.selectDay(DAYS[index]);
+            },
             
             setActivity(person, day, time, activity) {
                 if (!validateLunchActivity(person, day, time, activity)) {
@@ -687,7 +708,7 @@
             
             setWorkingHours(person, week, day, hours) {
                 if (!validateWorkingHours(hours)) {
-                    alert(`Fel: ange arbetstid som HH:MM-HH:MM.\n30-minuterssteg krävs.\nSenaste sluttid är ${TIME_SLOTS[TIME_SLOTS.length - 1]}.\nStarttiden måste vara före sluttiden, eller använd Ledig.`);
+                    alert(WORKING_HOURS_ERROR);
                     this.render();
                     return;
                 }
