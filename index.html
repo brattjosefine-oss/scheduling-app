@@ -518,7 +518,7 @@
                 <div class="bg-white rounded-lg border border-gray-200 p-2">
                     <div class="flex flex-wrap gap-2">
                         ${DAYS.map(day => `
-                            <button onclick="app.setDay('${day}')" class="px-4 py-2 rounded-lg font-semibold transition-colors ${store.getCurrentDay() === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                            <button onclick="app.selectDay('${day}')" class="px-4 py-2 rounded-lg font-semibold transition-colors ${store.getCurrentDay() === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
                                 ${day}
                             </button>
                         `).join('')}
@@ -668,12 +668,10 @@
             
             setWeek(week) {
                 store.setWeek(week);
-                this.render();
             },
 
-            setDay(day) {
+            selectDay(day) {
                 store.setCurrentDay(day);
-                this.render();
             },
             
             setActivity(person, day, time, activity) {
@@ -683,17 +681,15 @@
                     return;
                 }
                 store.setActivity(person, day, time, activity);
-                this.render();
             },
             
             setWorkingHours(person, week, day, hours) {
                 if (!validateWorkingHours(hours)) {
-                    alert(`❌ Ange arbetstid som HH:MM-HH:MM mellan ${TIME_SLOTS[0]} och ${TIME_SLOTS[TIME_SLOTS.length - 1]}, eller Ledig`);
+                    alert(`❌ Ange arbetstid som HH:MM-HH:MM i 30-minuterssteg mellan ${TIME_SLOTS[0]} och ${TIME_SLOTS[TIME_SLOTS.length - 1]}, där starttiden är före sluttiden, eller Ledig`);
                     this.render();
                     return;
                 }
                 store.setWorkingHours(person, week, day, hours);
-                this.render();
             },
             
             setTab(tab) {
