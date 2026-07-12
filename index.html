@@ -298,6 +298,10 @@
                 .replaceAll('"', '&quot;')
                 .replaceAll("'", '&#39;');
         }
+
+        function escapeAttribute(value) {
+            return escapeHtml(value);
+        }
         
         function isLunchTime(time) {
             return LUNCH_TIMES.includes(time);
@@ -462,6 +466,8 @@
             const [, start, end] = match;
             const startMinutes = timeToMinutes(start);
             const endMinutes = timeToMinutes(end);
+            const startMinutePart = Number(start.split(':')[1]);
+            const endMinutePart = Number(end.split(':')[1]);
             const dayStart = timeToMinutes(TIME_SLOTS[0]);
             // Working-hours inputs use 17:00 as the latest allowed end time even
             // though isPersonWorking() treats the end of the range as exclusive.
@@ -470,8 +476,8 @@
             return startMinutes >= dayStart &&
                 endMinutes <= latestAllowedEnd &&
                 startMinutes < endMinutes &&
-                startMinutes % 30 === 0 &&
-                endMinutes % 30 === 0;
+                [0, 30].includes(startMinutePart) &&
+                [0, 30].includes(endMinutePart);
         }
         
         // ============================================
@@ -568,7 +574,8 @@
                     if (isFixed) {
                         const fixedName = getFixedSlotName(person, day, time);
                         const safeFixedName = escapeHtml(fixedName);
-                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${safeFixedName}">${safeFixedName}</div>`;
+                        const safeFixedTitle = escapeAttribute(fixedName);
+                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${safeFixedTitle}">${safeFixedName}</div>`;
                     } else if (!isWorking) {
                         slotContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
