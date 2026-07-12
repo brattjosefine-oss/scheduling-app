@@ -91,7 +91,14 @@
         
         const STAFF = ['Josefine', 'Max', 'Jens', 'Rita', 'Sara', 'Tom', 'Ingrid', 'Helena', 'Sandra'];
         const DAYS = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
-        const TIME_SLOTS = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+        const TIME_SLOTS = ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+        const TIME_RANGE_PATTERN = /^(\d{2}:\d{2})-(\d{2}:\d{2})$/;
+        const WORKING_HOURS_ERROR = [
+            'Fel: ange arbetstid som HH:MM-HH:MM.',
+            '30-minuterssteg krävs.',
+            `Senaste sluttid är ${TIME_SLOTS[TIME_SLOTS.length - 1]}.`,
+            'Starttiden måste vara före sluttiden, eller använd Ledig.'
+        ].join('\n');
         
         const ACTIVITIES = {
             AKUT: 'Akut',
@@ -170,6 +177,7 @@
                 this.schedule = this.loadSchedule();
                 this.workingHours = this.loadWorkingHours();
                 this.currentWeek = 'odd';
+                this.currentDay = this.loadCurrentDay();
                 this.listeners = [];
             }
             
@@ -197,11 +205,16 @@
                 const defaults = {};
                 STAFF.forEach(person => {
                     defaults[person] = {
-                        'odd': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' },
-                        'even': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' }
+                        'odd': { Mån: '07:30-17:00', Tis: '07:30-17:00', Ons: '07:30-17:00', Tor: '07:30-17:00', Fre: '07:30-17:00' },
+                        'even': { Mån: '07:30-17:00', Tis: '07:30-17:00', Ons: '07:30-17:00', Tor: '07:30-17:00', Fre: '07:30-17:00' }
                     };
                 });
                 return defaults;
+            }
+
+            loadCurrentDay() {
+                const stored = localStorage.getItem('currentDay');
+                return DAYS.includes(stored) ? stored : DAYS[0];
             }
             
             saveSchedule() {
@@ -211,6 +224,11 @@
             
             saveWorkingHours() {
                 localStorage.setItem('workingHours', JSON.stringify(this.workingHours));
+                this.notifyListeners();
+            }
+
+            saveCurrentDay() {
+                localStorage.setItem('currentDay', this.currentDay);
                 this.notifyListeners();
             }
             
@@ -232,12 +250,21 @@
             }
             
             getWorkingHours(person, week, day) {
-                return this.workingHours[person]?.[week]?.[day] || '08:00-17:00';
+                return this.workingHours[person]?.[week]?.[day] || '07:30-17:00';
             }
             
             setWeek(week) {
                 this.currentWeek = week;
                 this.notifyListeners();
+            }
+
+            setCurrentDay(day) {
+                this.currentDay = day;
+                this.saveCurrentDay();
+            }
+
+            getCurrentDay() {
+                return this.currentDay;
             }
             
             subscribe(listener) {
@@ -261,6 +288,19 @@
         function timeToMinutes(timeStr) {
             const [h, m] = timeStr.split(':').map(Number);
             return h * 60 + m;
+        }
+
+        function escapeHtml(value) {
+            return String(value)
+                .replaceAll('&', '&amp;')
+                .replaceAll('<', '&lt;')
+                .replaceAll('>', '&gt;')
+                .replaceAll('"', '&quot;')
+                .replaceAll("'", '&#39;');
+        }
+
+        function escapeAttribute(value) {
+            return escapeHtml(value);
         }
         
         function isLunchTime(time) {
@@ -315,15 +355,6 @@
                 [ACTIVITIES.LEDIG]: 'activity-ledig'
             };
             return map[activity] || 'activity-ledig';
-        }
-        
-        function getDayIndex(day) {
-            return DAYS.indexOf(day);
-        }
-        
-        function getDayForTime(timeIdx) {
-            const slotsPerDay = Math.ceil(TIME_SLOTS.length / DAYS.length);
-            return DAYS[Math.floor(timeIdx / slotsPerDay)];
         }
         
         // ============================================
@@ -425,6 +456,29 @@
             
             return true;
         }
+
+        function validateWorkingHours(hours) {
+            if (hours === 'Ledig') return true;
+
+            const match = hours.match(TIME_RANGE_PATTERN);
+            if (!match) return false;
+
+            const [, start, end] = match;
+            const startMinutes = timeToMinutes(start);
+            const endMinutes = timeToMinutes(end);
+            const startMinutePart = Number(start.split(':')[1]);
+            const endMinutePart = Number(end.split(':')[1]);
+            const dayStart = timeToMinutes(TIME_SLOTS[0]);
+            // Working-hours inputs use 17:00 as the latest allowed end time even
+            // though isPersonWorking() treats the end of the range as exclusive.
+            const latestAllowedEnd = timeToMinutes(TIME_SLOTS[TIME_SLOTS.length - 1]);
+
+            return startMinutes >= dayStart &&
+                endMinutes <= latestAllowedEnd &&
+                startMinutes < endMinutes &&
+                [0, 30].includes(startMinutePart) &&
+                [0, 30].includes(endMinutePart);
+        }
         
         // ============================================
         // COMPONENTS
@@ -482,46 +536,46 @@
             html += '</div>';
             return html;
         }
+
+        function renderDayTabs() {
+            return `
+                <div class="bg-white rounded-lg border border-gray-200 p-2">
+                    <div class="flex flex-wrap gap-2">
+                        ${DAYS.map((day, index) => `
+                            <button onclick="app.selectDayByIndex(${index})" class="px-4 py-2 rounded-lg font-semibold transition-colors ${store.getCurrentDay() === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">
+                                ${day}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        }
         
         function renderScheduleTable() {
+            const day = store.getCurrentDay();
             let html = '<div class="overflow-x-auto bg-white rounded-lg shadow">';
-            html += '<div class="schedule-grid" style="grid-template-columns: 120px repeat(' + TIME_SLOTS.length + ', 60px);">';
-            
-            // Header row - Day indicators
-            html += '<div class="slot bg-gray-900 text-white font-bold"></div>';
-            let currentDay = '';
-            TIME_SLOTS.forEach((time, idx) => {
-                const day = getDayForTime(idx);
-                if (day !== currentDay) {
-                    currentDay = day;
-                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold border-l-4 border-white">${day}</div>`;
-                } else {
-                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold"></div>`;
-                }
-            });
-            
-            // Time row
-            html += '<div class="slot bg-gray-900 text-white font-bold">Tid</div>';
-            TIME_SLOTS.forEach(time => {
-                html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-gray-100'} text-gray-600 font-bold text-xs">${time}</div>`;
-            });
-            
-            // Person rows
+            html += '<div class="schedule-grid min-w-max" style="grid-template-columns: 88px repeat(' + STAFF.length + ', minmax(110px, 1fr));">';
+            html += `<div class="slot bg-gray-900 text-white font-bold">${day}</div>`;
             STAFF.forEach(person => {
-                html += `<div class="slot bg-gray-100 font-bold text-left pl-3">${person}</div>`;
-                
-                TIME_SLOTS.forEach(time => {
-                    const day = getDayForTime(TIME_SLOTS.indexOf(time));
+                html += `<div class="slot bg-blue-600 text-white font-bold text-sm">${person}</div>`;
+            });
+
+            TIME_SLOTS.forEach(time => {
+                const isLunch = isLunchTime(time);
+                html += `<div class="slot ${isLunch ? 'lunch-slot' : 'bg-gray-100'} text-gray-700 font-bold text-xs">${time}</div>`;
+
+                STAFF.forEach(person => {
                     const isWorking = isPersonWorking(person, day, time);
                     const isFixed = isFixedSlot(person, day, time);
                     const activity = store.getActivity(person, day, time);
-                    const isLunch = isLunchTime(time);
                     
                     let slotContent = '';
                     
                     if (isFixed) {
                         const fixedName = getFixedSlotName(person, day, time);
-                        slotContent = `<div class="slot-activity activity-mote" title="${fixedName}">${fixedName}</div>`;
+                        const safeFixedName = escapeHtml(fixedName);
+                        const safeFixedTitle = escapeAttribute(fixedName);
+                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${safeFixedTitle}">${safeFixedName}</div>`;
                     } else if (!isWorking) {
                         slotContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
@@ -614,7 +668,7 @@
                         html += `
                             <div>
                                 <label class="text-xs text-gray-600 font-semibold block mb-1">${day}</label>
-                                <input type="text" value="${hours}" placeholder="08:00-17:00" 
+                                <input type="text" value="${hours}" placeholder="07:30-17:00" 
                                     onchange="app.setWorkingHours('${person}', '${week}', '${day}', this.value)"
                                     class="w-full px-2 py-1 border border-gray-300 rounded text-sm">
                             </div>
@@ -640,7 +694,14 @@
             
             setWeek(week) {
                 store.setWeek(week);
-                this.render();
+            },
+
+            selectDay(day) {
+                store.setCurrentDay(day);
+            },
+
+            selectDayByIndex(index) {
+                this.selectDay(DAYS[index]);
             },
             
             setActivity(person, day, time, activity) {
@@ -650,12 +711,15 @@
                     return;
                 }
                 store.setActivity(person, day, time, activity);
-                this.render();
             },
             
             setWorkingHours(person, week, day, hours) {
+                if (!validateWorkingHours(hours)) {
+                    alert(WORKING_HOURS_ERROR);
+                    this.render();
+                    return;
+                }
                 store.setWorkingHours(person, week, day, hours);
-                this.render();
             },
             
             setTab(tab) {
@@ -681,6 +745,7 @@
                             <div class="flex-1 overflow-auto p-6">
                                 ${this.activeTab === 'schedule' ? `
                                     <div class="space-y-4">
+                                        ${renderDayTabs()}
                                         <div class="bg-white p-4 rounded-lg border border-gray-200">
                                             ${renderWarnings()}
                                         </div>
