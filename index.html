@@ -447,6 +447,8 @@
             const startMinutes = timeToMinutes(start);
             const endMinutes = timeToMinutes(end);
             const dayStart = timeToMinutes(TIME_SLOTS[0]);
+            // Working-hours inputs use 17:00 as the latest allowed end time even
+            // though occupancy checks treat the range as [start, end).
             const latestAllowedEnd = timeToMinutes(TIME_SLOTS[TIME_SLOTS.length - 1]);
 
             return startMinutes >= dayStart &&
@@ -685,7 +687,7 @@
             
             setWorkingHours(person, week, day, hours) {
                 if (!validateWorkingHours(hours)) {
-                    alert(`Fel: ange arbetstid som HH:MM-HH:MM i 30-minuterssteg från ${TIME_SLOTS[0]} till och med ${TIME_SLOTS[TIME_SLOTS.length - 1]}, där starttiden är före sluttiden, eller Ledig`);
+                    alert(`Fel: ange arbetstid som HH:MM-HH:MM i 30-minuterssteg från ${TIME_SLOTS[0]} med senaste sluttid ${TIME_SLOTS[TIME_SLOTS.length - 1]}, där starttiden är före sluttiden, eller Ledig`);
                     this.render();
                     return;
                 }
