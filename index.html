@@ -640,7 +640,7 @@
             
             setActivity(person, day, time, activity) {
                 if (!validateLunchActivity(person, day, time, activity)) {
-                    alert('❌ Max 1 Recept under lunch (12:00-12:30)');
+                    alert('❌ Max 1 Recept under lunch (12:00-13:00)');
                     this.render();
                     return;
                 }
@@ -683,7 +683,7 @@
                                             ${DAYS.map(day => `<button onclick="app.setDay('${day}')" class="px-4 py-2 rounded-lg font-semibold transition-colors ${this.activeDay === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">${day}</button>`).join('')}
                                         </div>
                                         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
-                                            <strong>Lunch (12:00-12:30):</strong> Endast Recept tillåtet, max 1 av 2 halvtimmar
+                                            <strong>Lunch (12:00-13:00):</strong> Endast Recept tillåtet, max 1 av 2 halvtimmar
                                         </div>
                                         ${renderScheduleTable()}
                                     </div>
