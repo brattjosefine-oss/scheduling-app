@@ -448,7 +448,7 @@
             const endMinutes = timeToMinutes(end);
             const dayStart = timeToMinutes(TIME_SLOTS[0]);
             // Working-hours inputs use 17:00 as the latest allowed end time even
-            // though occupancy checks treat the range as [start, end).
+            // though isPersonWorking() treats the end of the range as exclusive.
             const latestAllowedEnd = timeToMinutes(TIME_SLOTS[TIME_SLOTS.length - 1]);
 
             return startMinutes >= dayStart &&
@@ -551,7 +551,7 @@
                     
                     if (isFixed) {
                         const fixedName = getFixedSlotName(person, day, time);
-                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight" title="${fixedName}">${fixedName}</div>`;
+                        slotContent = `<div class="slot-activity activity-mote px-1 text-xs leading-tight break-words" title="${fixedName}">${fixedName}</div>`;
                     } else if (!isWorking) {
                         slotContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
@@ -687,7 +687,7 @@
             
             setWorkingHours(person, week, day, hours) {
                 if (!validateWorkingHours(hours)) {
-                    alert(`Fel: ange arbetstid som HH:MM-HH:MM i 30-minuterssteg från ${TIME_SLOTS[0]} med senaste sluttid ${TIME_SLOTS[TIME_SLOTS.length - 1]}, där starttiden är före sluttiden, eller Ledig`);
+                    alert(`Fel: ange arbetstid som HH:MM-HH:MM.\n30-minuterssteg krävs.\nSenaste sluttid är ${TIME_SLOTS[TIME_SLOTS.length - 1]}.\nStarttiden måste vara före sluttiden, eller använd Ledig.`);
                     this.render();
                     return;
                 }
