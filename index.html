@@ -91,7 +91,7 @@
         
         const STAFF = ['Josefine', 'Max', 'Jens', 'Rita', 'Sara', 'Tom', 'Ingrid', 'Helena', 'Sandra'];
         const DAYS = ['Mån', 'Tis', 'Ons', 'Tor', 'Fre'];
-        const TIME_SLOTS = ['08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
+        const TIME_SLOTS = ['07:30', '08:00', '08:30', '09:00', '09:30', '10:00', '10:30', '11:00', '11:30', '12:00', '12:30', '13:00', '13:30', '14:00', '14:30', '15:00', '15:30', '16:00', '16:30', '17:00'];
         
         const ACTIVITIES = {
             AKUT: 'Akut',
@@ -197,8 +197,8 @@
                 const defaults = {};
                 STAFF.forEach(person => {
                     defaults[person] = {
-                        'odd': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' },
-                        'even': { Mån: '08:00-17:00', Tis: '08:00-17:00', Ons: '08:00-17:00', Tor: '08:00-17:00', Fre: '08:00-17:00' }
+                        'odd': { Mån: '07:30-17:00', Tis: '07:30-17:00', Ons: '07:30-17:00', Tor: '07:30-17:00', Fre: '07:30-17:00' },
+                        'even': { Mån: '07:30-17:00', Tis: '07:30-17:00', Ons: '07:30-17:00', Tor: '07:30-17:00', Fre: '07:30-17:00' }
                     };
                 });
                 return defaults;
@@ -319,11 +319,6 @@
         
         function getDayIndex(day) {
             return DAYS.indexOf(day);
-        }
-        
-        function getDayForTime(timeIdx) {
-            const slotsPerDay = Math.ceil(TIME_SLOTS.length / DAYS.length);
-            return DAYS[Math.floor(timeIdx / slotsPerDay)];
         }
         
         // ============================================
@@ -484,72 +479,66 @@
         }
         
         function renderScheduleTable() {
-            let html = '<div class="overflow-x-auto bg-white rounded-lg shadow">';
-            html += '<div class="schedule-grid" style="grid-template-columns: 120px repeat(' + TIME_SLOTS.length + ', 60px);">';
+            const day = app.activeDay;
             
-            // Header row - Day indicators
-            html += '<div class="slot bg-gray-900 text-white font-bold"></div>';
-            let currentDay = '';
-            TIME_SLOTS.forEach((time, idx) => {
-                const day = getDayForTime(idx);
-                if (day !== currentDay) {
-                    currentDay = day;
-                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold border-l-4 border-white">${day}</div>`;
-                } else {
-                    html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-blue-600'} text-${isLunchTime(time) ? 'gray-900' : 'white'} font-bold"></div>`;
-                }
-            });
+            let html = '<div style="overflow-x: auto; background: white; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);">';
+            html += '<table style="border-collapse: collapse; min-width: max-content; width: 100%;">';
             
-            // Time row
-            html += '<div class="slot bg-gray-900 text-white font-bold">Tid</div>';
-            TIME_SLOTS.forEach(time => {
-                html += `<div class="slot ${isLunchTime(time) ? 'lunch-slot' : 'bg-gray-100'} text-gray-600 font-bold text-xs">${time}</div>`;
-            });
-            
-            // Person rows
+            // Header row - Person names as columns
+            html += '<thead><tr>';
+            html += '<th style="min-width: 70px; padding: 10px 8px; background: #111827; color: white; text-align: center; border: 1px solid #d1d5db; position: sticky; left: 0; z-index: 20; font-size: 0.85rem;">Tid</th>';
             STAFF.forEach(person => {
-                html += `<div class="slot bg-gray-100 font-bold text-left pl-3">${person}</div>`;
+                html += `<th style="min-width: 105px; padding: 10px 8px; background: #1d4ed8; color: white; text-align: center; border: 1px solid #d1d5db; font-size: 0.8rem; white-space: nowrap;">${person}</th>`;
+            });
+            html += '</tr></thead>';
+            
+            // Body - one row per time slot
+            html += '<tbody>';
+            TIME_SLOTS.forEach(time => {
+                const isLunch = isLunchTime(time);
+                html += '<tr>';
                 
-                TIME_SLOTS.forEach(time => {
-                    const day = getDayForTime(TIME_SLOTS.indexOf(time));
+                // Time cell - sticky on left
+                html += `<td style="min-width: 70px; padding: 8px; background: ${isLunch ? '#fef3c7' : '#f3f4f6'}; text-align: center; border: 1px solid #d1d5db; position: sticky; left: 0; z-index: 10; font-weight: bold; font-size: 0.8rem; white-space: nowrap;">${time}</td>`;
+                
+                STAFF.forEach(person => {
                     const isWorking = isPersonWorking(person, day, time);
                     const isFixed = isFixedSlot(person, day, time);
                     const activity = store.getActivity(person, day, time);
-                    const isLunch = isLunchTime(time);
                     
-                    let slotContent = '';
+                    let cellContent = '';
                     
                     if (isFixed) {
                         const fixedName = getFixedSlotName(person, day, time);
-                        slotContent = `<div class="slot-activity activity-mote" title="${fixedName}">${fixedName}</div>`;
+                        cellContent = `<div class="slot-activity activity-mote" title="${fixedName}" style="cursor: default; font-size: 0.65rem;">${fixedName}</div>`;
                     } else if (!isWorking) {
-                        slotContent = `<div class="slot-activity activity-ledig">—</div>`;
+                        cellContent = `<div class="slot-activity activity-ledig">—</div>`;
                     } else {
                         let options = ACTIVITY_OPTIONS;
-                        
-                        // Limit options during lunch
                         if (isLunch) {
                             options = [ACTIVITIES.RECEPT, ACTIVITIES.LEDIG];
                         }
-                        
-                        // Only Josefine can have Chefstid
                         if (person !== 'Josefine') {
                             options = options.filter(a => a !== ACTIVITIES.CHEFSTID);
                         }
                         
-                        slotContent = `
-                            <select onchange="app.setActivity('${person}', '${day}', '${time}', this.value)" class="w-full h-full bg-transparent text-white font-bold text-xs cursor-pointer border-none focus:outline-none">
-                                ${options.map(opt => `<option value="${opt}" ${activity === opt ? 'selected' : ''}>${opt}</option>`).join('')}
-                            </select>
+                        cellContent = `
+                            <div class="slot-activity ${getActivityClass(activity)}">
+                                <select onchange="app.setActivity('${person}', '${day}', '${time}', this.value)"
+                                        style="width: 100%; height: 100%; background: transparent; color: white; font-weight: bold; font-size: 0.65rem; cursor: pointer; border: none; outline: none; appearance: none;">
+                                    ${options.map(opt => `<option value="${opt}" ${activity === opt ? 'selected' : ''} style="background: #1f2937; color: white;">${opt}</option>`).join('')}
+                                </select>
+                            </div>
                         `;
-                        slotContent = `<div class="slot-activity ${getActivityClass(activity)}">${slotContent}</div>`;
                     }
                     
-                    html += `<div class="slot ${isLunch ? 'lunch-slot' : ''}">${slotContent}</div>`;
+                    html += `<td style="min-width: 105px; height: 46px; padding: 4px; border: 1px solid #d1d5db; ${isLunch ? 'background: #fef3c7;' : ''}">${cellContent}</td>`;
                 });
+                
+                html += '</tr>';
             });
             
-            html += '</div></div>';
+            html += '</tbody></table></div>';
             return html;
         }
         
@@ -637,9 +626,15 @@
         
         const app = {
             activeTab: 'schedule',
+            activeDay: 'Mån',
             
             setWeek(week) {
                 store.setWeek(week);
+                this.render();
+            },
+            
+            setDay(day) {
+                this.activeDay = day;
                 this.render();
             },
             
@@ -683,6 +678,9 @@
                                     <div class="space-y-4">
                                         <div class="bg-white p-4 rounded-lg border border-gray-200">
                                             ${renderWarnings()}
+                                        </div>
+                                        <div class="bg-white border border-gray-200 rounded-lg p-3 flex gap-2 flex-wrap">
+                                            ${DAYS.map(day => `<button onclick="app.setDay('${day}')" class="px-4 py-2 rounded-lg font-semibold transition-colors ${this.activeDay === day ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-700 hover:bg-gray-300'}">${day}</button>`).join('')}
                                         </div>
                                         <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 text-sm text-yellow-800">
                                             <strong>Lunch (12:00-13:00):</strong> Endast Recept tillåtet, max 1 av 2 halvtimmar
